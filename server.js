@@ -12,7 +12,8 @@ const emailvalidator = require("deep-email-validator");
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin:
+      ["https://6672b66dedf85b0497ad5cfb--spiffy-salamander-bf0160.netlify.app"  , 'http://localhost:5173'],
     credentials: true,
   })
 );
@@ -20,33 +21,15 @@ app.use(express.json());
 databaseConnect();
 
 app.get("/", async (req, res) => {
-  const { data } = await axios.get("https://jsonip.com");
-  let previousDate = moment("2024-06-13").format("YYYY-MM-DD");
-  const currentDate = moment().format("YYYY-MM-DD");
-  const endDate = moment().add(30, "days").format("YYYY-MM-DD");
-
-  let today;
-  if (previousDate !== currentDate) {
-    today = "data should updated and credit +2500";
-    previousDate = currentDate;
-  } else {
-    today = "already collected credit.";
-  }
-
-  const ip = data.ip;
-  const email = "contact@jsmastery.pro";
-  const revalid = await emailvalidator.validate(email);
+  const {
+    data: { ip },
+  } = await axios.get("https://jsonip.com/");
   res.send({
     say: "Hello world!",
-    email,
-    revalid,
     ip,
-    today,
-    currentDate,
-    previousDate,
-    endDate,
   });
 });
+
 app.use("/api/v1/gmail", checkerRouter);
 app.use("/api/v2/user", userRouter);
 

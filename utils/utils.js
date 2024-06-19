@@ -14,18 +14,21 @@ exports.tokenCreate = async (user) => {
 
 exports.userAuthorize = async (req, res, next) => {
   const bearerToken = req.headers.authorization;
-  if (!bearerToken)
-    return this.resReturn(res, 222, { err: "token not found s" });
-
-  const token = bearerToken.split(" ")[1];
-  const user = await jwt.verify(
-    token,
-    process.env.jwt_secret,
-    async (err, verifiedJwt) => {
-      if (err) return this.resReturn(res, 223, { err: err.message });
-      return verifiedJwt;
-    }
-  );
-  req.user = user;
-  next();
+  try {
+    const token = bearerToken.split(" ")[1];
+    if (!token) return this.resReturn(res, 222, { err: "token not found s" });
+    await jwt.verify(
+      token,
+      process.env.jwt_secret,
+      async (err, verifiedJwt) => {
+        if (err) return this.resReturn(res, 223, { err: err.message });
+        verifiedJwt;
+        console.log({verifiedJwt})
+        req.user = verifiedJwt;
+        return next();
+      }
+    );
+  } catch (error) {
+    console.log("s: auth error:", error.message);
+  }
 };
