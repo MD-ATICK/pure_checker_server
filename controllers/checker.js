@@ -32,7 +32,7 @@ class checker {
       console.log("31", { token, email });
       // const data = await emailValidator.validate(email);
       const data = {
-        email: "example@example.com",
+        email: email + token,
         validators: {
           smtp: {
             valid: true,
