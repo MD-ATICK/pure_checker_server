@@ -48,13 +48,13 @@ class user {
       return resReturn(res, 222, { err: "already running subscription" });
 
     if (planType === "subscription") {
-      const perDayCredit = Math.floor(credit / 30);
+      const perDay = Math.floor(credit / 30);
       user = await User.findByIdAndUpdate(
         _id,
         {
           subscription: true,
-          credit: Number(user.credit) + Number(perDayCredit),
-          subPerDayCredit: perDayCredit,
+          credit: Number(user.credit) + Number(perDay),
+          subPerDayCredit: perDay,
           subLastDate: moment().format("YYYY-MM-DD"),
           subEndDate: moment().add(dayLimit, "days").format("YYYY-MM-DD"),
         },
