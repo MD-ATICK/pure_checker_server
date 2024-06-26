@@ -16,7 +16,6 @@ const jwt = require("jsonwebtoken");
 const Api = require("../models/ApiModel");
 const Plan = require("../models/PricingModel");
 const user = require("./user");
-const emailValidateApi = require("../api/validateEmail");
 
 class checker {
   deleteAllCollectionData = async (req, res) => {
@@ -39,7 +38,11 @@ class checker {
       const { email } = req.query;
       const bearerToken = req.headers.authorization;
       const token = bearerToken?.split(" ")[1];
-      const data = await emailValidateApi(req, res);
+      console.log("31", { token, email });
+      const start = Date.now();
+      const data = await validate(email);
+      const duration = Date.now() - start;
+
       if (data) {
         if (token === "null" || !token) {
           console.log("1");
@@ -53,6 +56,7 @@ class checker {
           if (!userIp) return resReturn(res, 222, { err: "ip not found." });
           resReturn(res, 200, {
             data: { ...data, email },
+            duration,
             userIp,
             userStatus: "default",
           });

@@ -4,12 +4,26 @@
         {
             "src": "index.js",
             "use": "@vercel/node"
+        },
+        {
+            "src": "/controllers/checker.js",
+            "use": "@vercel/node"
         }
     ],
     "routes": [
         {
             "src": "/(.*)",
             "dest": "index.js"
+        },
+        {
+            "src": "/api/v1/gmail/check",
+            "dest": "/controllers/checker.js"
         }
-    ]
+    ],
+    "functions": {
+        "/controllers/checker.js": {
+            "memory": 1024,
+            "maxDuration": 15
+        }
+    }
 }
