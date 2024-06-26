@@ -9,6 +9,7 @@ const checkerRouter = require("./router/CheckerRoute");
 const { databaseConnect } = require("./utils/DatabaseConnect");
 const moment = require("moment");
 const path = require("path");
+const { validate } = require("deep-email-validator");
 
 app.use(
   cors({
@@ -22,8 +23,13 @@ app.use(express.json());
 databaseConnect();
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get("/a", async (req, res) => {
+  const data = await validate("mdatick866@gmail.com");
+  res.json(data);
 });
 
 app.use("/api/v1/gmail", checkerRouter);
