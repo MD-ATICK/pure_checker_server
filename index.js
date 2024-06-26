@@ -12,7 +12,10 @@ const path = require("path");
 
 app.use(
   cors({
-    origin: "https://spiffy-salamander-bf0160.netlify.app",
+    origin: [
+      "https://spiffy-salamander-bf0160.netlify.app",
+      "http://localhost:5173",
+    ],
     credentials: true,
   })
 );
@@ -24,8 +27,8 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.use("/api/gmail", checkerRouter);
-app.use("/api/user", userRouter);
+app.use("/api/v1/gmail", checkerRouter);
+app.use("/api/v2/user", userRouter);
 
 app.listen(port, () => {
   console.log("▶️  app listening on port" + " " + port + "!");

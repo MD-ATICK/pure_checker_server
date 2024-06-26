@@ -32,13 +32,15 @@ class checker {
       console.log(typeof token);
       if (token === "null") {
         console.log("1");
-        const x = await axios.get("https://jsonip.com");
-        const ip = x.data.ip;
+        // const x = await axios.get("https://jsonip.com");
+        // const ip = x.data.ip;
+        const ip = "123.56.68";
         const userIp = await UserIp.findOneAndUpdate(
           { ip },
           { $inc: { freeCredit: -1 } },
           { new: true }
         );
+        if (!userIp) return resReturn(res, 222, { err: "ip not found." });
         console.log(userIp);
         resReturn(res, 200, {
           data: { ...data, email },
