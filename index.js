@@ -19,6 +19,7 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(express.json());
 databaseConnect();
 app.use(express.static(path.join(__dirname, "public")));
