@@ -33,7 +33,7 @@ app.get("/email", (req, res) => {
       res.json(data);
     })
     .catch((error) => {
-      console.error("Validation error:", error);
+      console.error("Validation error is:", error);
       res
         .status(500)
         .json({ error: "Email validation failed", details: error.message });
