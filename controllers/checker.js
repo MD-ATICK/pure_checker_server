@@ -1,14 +1,8 @@
 require("dotenv").config();
 const { default: axios } = require("axios");
 const User = require("../models/userModel");
-const emailExistence = require("email-existence");
 const {
   resReturn,
-  userAuthorize,
-  validateEmailFormat,
-  checkMXRecords,
-  checkSMTPConnection,
-  validateEmail,
 } = require("../utils/utils");
 const { validate } = require("deep-email-validator");
 const UserIp = require("../models/IpModel");
