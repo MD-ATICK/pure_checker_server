@@ -39,9 +39,7 @@ class checker {
       const bearerToken = req.headers.authorization;
       const token = bearerToken?.split(" ")[1];
       console.log("31", { token, email });
-      const start = Date.now();
       const data = await validate(email);
-      const duration = Date.now() - start;
 
       if (data) {
         if (token === "null" || !token) {
@@ -53,10 +51,9 @@ class checker {
             { $inc: { freeCredit: -1 } },
             { new: true }
           );
-          if (!userIp) return resReturn(res, 222, { err: "ip not found." });
+          if (!userIp) return resReturn(res, 222, { err: "ip not a found." });
           resReturn(res, 200, {
             data: { ...data, email },
-            duration,
             userIp,
             userStatus: "default",
           });
