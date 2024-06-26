@@ -27,7 +27,7 @@ app.get("/", async (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.get("/a", (req, res) => {
+app.get("/email", (req, res) => {
   validate("mdatick866@gmail.com")
     .then((data) => {
       res.json(data);
