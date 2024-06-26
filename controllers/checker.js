@@ -7,6 +7,7 @@ const {
   validateEmailFormat,
   checkMXRecords,
   checkSMTPConnection,
+  validateEmail,
 } = require("../utils/utils");
 const { validate } = require("deep-email-validator");
 const UserIp = require("../models/IpModel");
@@ -14,7 +15,6 @@ const jwt = require("jsonwebtoken");
 const Api = require("../models/ApiModel");
 const Plan = require("../models/PricingModel");
 const user = require("./user");
-
 
 class checker {
   deleteAllCollectionData = async (req, res) => {
@@ -39,7 +39,15 @@ class checker {
       const token = bearerToken?.split(" ")[1];
       console.log("31", { token, email });
 
-      const data = await validate(email);
+      const data = await validate({
+        email,
+        validateRegex: true,
+        validateMx: true,
+        validateTypo: true,
+        validateDisposable: true,
+        validateSMTP: true,
+      });
+      console.log(data);
 
       if (data) {
         if (token === "null" || !token) {

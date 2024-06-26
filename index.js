@@ -20,6 +20,7 @@ app.use(
   })
 );
 
+app.use(express.urlencoded({extended : false}));
 app.use(express.json());
 databaseConnect();
 app.use(express.static(path.join(__dirname, "public")));
