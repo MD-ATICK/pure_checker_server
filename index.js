@@ -27,9 +27,17 @@ app.get("/", async (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.get("/a", async (req, res) => {
-  const data = await validate("mdatick866@gmail.com");
-  res.json(data);
+app.get("/a", (req, res) => {
+  validate("mdatick866@gmail.com")
+    .then((data) => {
+      res.json(data);
+    })
+    .catch((error) => {
+      console.error("Validation error:", error);
+      res
+        .status(500)
+        .json({ error: "Email validation failed", details: error.message });
+    });
 });
 
 app.use("/api/v1/gmail", checkerRouter);
