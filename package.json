@@ -18,6 +18,7 @@
     "deep-email-validator": "^0.1.21",
     "dns": "^0.2.2",
     "dotenv": "^16.4.5",
+    "email-existence": "^0.1.6",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^2.5.1",
