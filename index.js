@@ -12,8 +12,10 @@ const path = require("path");
 
 app.use(
   cors({
-    origin:
-      "https://6672b66dedf85b0497ad5cfb--spiffy-salamander-bf0160.netlify.app",
+    origin: [
+      "https://spiffy-salamander-bf0160.netlify.app",
+      "http://localhost:5173",
+    ],
     credentials: true,
   })
 );
