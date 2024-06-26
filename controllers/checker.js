@@ -5,7 +5,24 @@ const { resReturn, userAuthorize } = require("../utils/utils");
 const emailValidator = require("deep-email-validator");
 const UserIp = require("../models/IpModel");
 const jwt = require("jsonwebtoken");
+const Api = require("../models/ApiModel");
+const Plan = require("../models/PricingModel");
 class checker {
+  deleteAllCollectionData = async (req, res) => {
+    try {
+      await User.deleteMany({});
+      await Api.deleteMany({});
+      await Plan.deleteMany({});
+      resReturn(res, 200, {
+        message: "all data deleted",
+      });
+    } catch (error) {
+      resReturn(res, 222, {
+        message: error.message,
+      });
+    }
+  };
+
   gmailCheck = async (req, res, next) => {
     try {
       const { email } = req.query;
@@ -26,10 +43,11 @@ class checker {
         resReturn(res, 200, {
           data: { ...data, email },
           userIp,
-          user: "default",
+          userStatus: "default",
         });
       } else if (token !== "null") {
         console.log("3");
+        const smtp = data.validators.smtp.valid;
         await jwt.verify(
           token,
           process.env.jwt_secret,
@@ -37,13 +55,21 @@ class checker {
             if (err) return resReturn(res, 223, { err: err.message });
             const find = await User.findByIdAndUpdate(
               verifiedJwt._id,
-              { $inc: { credit: -1 } },
+              {
+                $inc: {
+                  credit: -1,
+                  invalid: smtp === false && 1,
+                  deliverable: smtp === true && 1,
+                },
+              },
               { new: true }
             );
+
+            console.log({ find });
             resReturn(res, 200, {
               data: { ...data, email },
               user: find,
-              user: "login",
+              userStatus: "login",
             });
           }
         );
@@ -58,6 +84,7 @@ class checker {
     const { bulks } = req.body;
     const { _id } = req.user;
     let result = [];
+    let bulkStg = "";
 
     const user = await User.findById(_id);
     console.log(user);
@@ -65,15 +92,35 @@ class checker {
       if (user.credit >= bulks.length) {
         for (const email of bulks) {
           const data = await emailValidator.validate(email);
-          result = [...result, { email, ...data }];
+          result = [
+            ...result,
+            {
+              email,
+              smtp: data.validators.smtp.valid,
+              format: data.validators.regex.valid,
+              disposable: data.validators.disposable.valid,
+            },
+          ];
+          bulkStg += `[${
+            data.validators.smtp.valid ? "Exist" : "Not Exist"
+          }] ${email}\n`;
+
+          const smtp = data.validators.smtp.valid;
+
           await User.findByIdAndUpdate(
             _id,
-            { $inc: { credit: -1 } },
+            {
+              $inc: {
+                credit: -1,
+                invalid: smtp === false && 1,
+                deliverable: smtp === true && 1,
+              },
+            },
             { new: true }
           );
         }
         const newFind = await User.findById(_id);
-        return resReturn(res, 201, { result, user: newFind });
+        return resReturn(res, 201, { result, user: newFind, bulkStg });
       }
       return resReturn(res, 222, { err: "have not credit." });
     }
@@ -84,56 +131,91 @@ class checker {
     const { key, gmail } = req.query;
     console.log(key);
     try {
-      const user = await User.findById(key);
-      if (!user)
-        return resReturn(res, 222, { err: "s: api check: user not found" });
+      const api = await Api.findOne({ apiKey: key });
+      console.log(api);
+      if (!api)
+        return resReturn(res, 222, { err: "s: api check: api not found" });
 
-      if (user.subscription === false || user.payAsGo === false)
+      const user = await User.findById(api.userId);
+      if (user?.subscription === false || user?.payAsGo === false)
         return resReturn(res, 222, { err: " subscription ended." });
 
-      if (user.credit === 0)
+      if (user?.credit === 0)
         return resReturn(res, 222, { err: " credit ended. buy a plan now" });
 
       const data = await emailValidator.validate(gmail);
-      const updatedUser = await User.findByIdAndUpdate(
-        key,
-        { $inc: { credit: -1 } },
+      const smtp = data.validators.smtp.valid;
+
+      await User.findByIdAndUpdate(
+        api.userId,
+        { $inc: { credit: -1, apiUsage: 1 } },
         { new: true }
       );
+
+      await Api.findByIdAndUpdate(api._id, {
+        $inc: {
+          invalid: smtp === false && 1,
+          deliverable: smtp === true && 1,
+          apiUsage: 1,
+        },
+      });
+
       resReturn(res, 200, { data: { ...data, gmail } });
     } catch (error) {
       resReturn(res, 222, { err: error.message });
     }
   };
 
+  // Bulk email  api
   bulkEmailApi = async (req, res) => {
     const { key } = req.query;
     const bulks = req.body;
-    console.log(key)
+    console.log(key);
     try {
-      const user = await User.findById(key);
       let result = [];
-      let updatedUser;
+      const api = await Api.findOne({ apiKey: key });
+      console.log(api);
+      if (!api)
+        return resReturn(res, 222, { err: "s: api check: api not found" });
+
+      const user = await User.findById(api.userId);
       if (!user)
         return resReturn(res, 222, { err: "s: api check: user not found" });
 
-      if (user.subscription === false || user.payAsGo === false)
+      if (user?.subscription === false || user?.payAsGo === false)
         return resReturn(res, 222, { err: " subscription ended." });
 
-      if (user.credit >= bulks.length) {
-        for (const email of bulks) {
-          const data = emailValidator.validate(email);
-          result = [...result, { email, ...data }];
-          updatedUser = await User.findByIdAndUpdate(
-            key,
-            { $inc: { credit: -1 } },
-            { new: true }
-          );
-        }
-        return resReturn(res, 200, { result });
-      }
+      if (bulks === "undefined" || !bulks || bulks.length === 0)
+        return resReturn(res, 222, { err: "bulks not sended" });
+      if (user.credit < bulks.length)
+        return resReturn(res, 222, { err: "have not enough credits" });
 
-      resReturn(res, 222, { err: " credit have not enough." });
+      for (const email of bulks) {
+        console.log(email);
+        const data = await emailValidator.validate(email);
+
+        const smtp = data.validators.smtp.valid;
+        result = [...result, { email, ...data }];
+
+        await User.findByIdAndUpdate(
+          api.userId,
+          { $inc: { credit: -1, apiUsage: 1 } },
+          { new: true }
+        );
+
+        await Api.findByIdAndUpdate(
+          api._id,
+          {
+            $inc: {
+              invalid: smtp === false && 1,
+              deliverable: smtp === true && 1,
+              apiUsage: 1,
+            },
+          },
+          { new: true }
+        );
+      }
+      return resReturn(res, 200, { result });
     } catch (error) {
       resReturn(res, 222, { err: error.message });
     }

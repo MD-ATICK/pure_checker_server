@@ -11,16 +11,19 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    perDayCredit: { type: Number },
     payAsGo: {
       type: Boolean,
       default: false,
     },
-    lastDate: {
+    subPerDayCredit : {
+      type : Number,
+      default : 0
+    } ,
+    subLastDate: {
       type: String,
       default: "",
     },
-    endDate: {
+    subEndDate: {
       type: String,
       default: "",
     },
@@ -33,7 +36,39 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "user"],
       default: "user",
     },
+    deliverable: Number,
+    invalid: Number,
+    apiUsage: Number,
+    apiUsageHistory: [
+      {
+        invalid: Number,
+        deliverable: Number,
+        apiUsage: Number,
+        Date: String,
+      },
+    ],
+    country: {
+      type : String,
+      default : ''
+    },
+    address: {
+      type : String,
+      default : ''
+    },
+    zipCode: {
+      type : String,
+      default : ''
+    },
+    mobileNumber: {
+      type : Number,
+      default : ''
+    },
+    city: {
+      type : String,
+      default : ''
+    },
   },
+
   {
     timestamps: true,
   }

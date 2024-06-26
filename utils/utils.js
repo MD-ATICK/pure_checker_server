@@ -23,7 +23,7 @@ exports.userAuthorize = async (req, res, next) => {
       async (err, verifiedJwt) => {
         if (err) return this.resReturn(res, 223, { err: err.message });
         verifiedJwt;
-        console.log({verifiedJwt})
+        console.log({ verifiedJwt });
         req.user = verifiedJwt;
         return next();
       }
@@ -32,3 +32,4 @@ exports.userAuthorize = async (req, res, next) => {
     console.log("s: auth error:", error.message);
   }
 };
+

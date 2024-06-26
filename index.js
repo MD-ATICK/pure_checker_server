@@ -8,7 +8,6 @@ const userRouter = require("./router/userRoute");
 const checkerRouter = require("./router/CheckerRoute");
 const { databaseConnect } = require("./utils/DatabaseConnect");
 const moment = require("moment");
-const emailvalidator = require("deep-email-validator");
 const path = require('path')
 
 app.use(
