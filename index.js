@@ -8,14 +8,12 @@ const userRouter = require("./router/userRoute");
 const checkerRouter = require("./router/CheckerRoute");
 const { databaseConnect } = require("./utils/DatabaseConnect");
 const moment = require("moment");
-const path = require('path')
+const path = require("path");
 
 app.use(
   cors({
-    origin: [
+    origin:
       "https://6672b66dedf85b0497ad5cfb--spiffy-salamander-bf0160.netlify.app",
-      "http://localhost:5173",
-    ],
     credentials: true,
   })
 );
