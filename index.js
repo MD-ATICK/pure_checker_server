@@ -12,15 +12,12 @@ const path = require("path");
 
 app.use(
   cors({
-    origin: [
-      "https://spiffy-salamander-bf0160.netlify.app",
-      "http://localhost:5173",
-    ],
+    origin: ["https://pure-checker-client.vercel.app", "http://localhost:5173"],
     credentials: true,
   })
 );
 
-app.use(express.urlencoded({extended : false}));
+app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 databaseConnect();
 app.use(express.static(path.join(__dirname, "public")));
