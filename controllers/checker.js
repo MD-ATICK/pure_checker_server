@@ -16,6 +16,7 @@ const jwt = require("jsonwebtoken");
 const Api = require("../models/ApiModel");
 const Plan = require("../models/PricingModel");
 const user = require("./user");
+const emailValidateApi = require("../api/validateEmail");
 
 class checker {
   deleteAllCollectionData = async (req, res) => {
@@ -38,10 +39,7 @@ class checker {
       const { email } = req.query;
       const bearerToken = req.headers.authorization;
       const token = bearerToken?.split(" ")[1];
-      console.log("31", { token, email });
-
-      const data = await validate(email);
-      console.log("emailData", data);
+      const data = await emailValidateApi(req, res);
       if (data) {
         if (token === "null" || !token) {
           console.log("1");
