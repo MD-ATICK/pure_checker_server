@@ -34,52 +34,52 @@ class checker {
       const data = await validate(email);
       resReturn(res, 201, data);
 
-      // if (data) {
-      //   if (token === "null" || !token) {
-      //     console.log("1");
-      //     const x = await axios.get("https://jsonip.com");
-      //     const ip = x.data.ip;
-      //     const userIp = await UserIp.findOneAndUpdate(
-      //       { ip },
-      //       { $inc: { freeCredit: -1 } },
-      //       { new: true }
-      //     );
-      //     if (!userIp) return resReturn(res, 222, { err: "ip not a found." });
-      //     resReturn(res, 200, {
-      //       data: { ...data, email },
-      //       userIp,
-      //       userStatus: "default",
-      //     });
-      //   } else if (token !== "null") {
-      //     console.log("3");
-      //     const smtp = data.validators.smtp.valid;
-      //     await jwt.verify(
-      //       token,
-      //       process.env.jwt_secret,
-      //       async (err, verifiedJwt) => {
-      //         if (err) return resReturn(res, 223, { err: err.message });
-      //         const find = await User.findByIdAndUpdate(
-      //           verifiedJwt._id,
-      //           {
-      //             $inc: {
-      //               credit: -1,
-      //               invalid: smtp === false && 1,
-      //               deliverable: smtp === true && 1,
-      //             },
-      //           },
-      //           { new: true }
-      //         );
+      if (data) {
+        if (token === "null" || !token) {
+          console.log("1");
+          const x = await axios.get("https://jsonip.com");
+          const ip = x.data.ip;
+          const userIp = await UserIp.findOneAndUpdate(
+            { ip },
+            { $inc: { freeCredit: -1 } },
+            { new: true }
+          );
+          if (!userIp) return resReturn(res, 222, { err: "ip not a found." });
+          resReturn(res, 200, {
+            data: { ...data, email },
+            userIp,
+            userStatus: "default",
+          });
+        } else if (token !== "null") {
+          console.log("3");
+          const smtp = data.validators.smtp.valid;
+          await jwt.verify(
+            token,
+            process.env.jwt_secret,
+            async (err, verifiedJwt) => {
+              if (err) return resReturn(res, 223, { err: err.message });
+              const find = await User.findByIdAndUpdate(
+                verifiedJwt._id,
+                {
+                  $inc: {
+                    credit: -1,
+                    invalid: smtp === false && 1,
+                    deliverable: smtp === true && 1,
+                  },
+                },
+                { new: true }
+              );
 
-      //         console.log({ find });
-      //         resReturn(res, 200, {
-      //           data: { ...data, email },
-      //           user: find,
-      //           userStatus: "login",
-      //         });
-      //       }
-      //     );
-      //   }
-      // }
+              console.log({ find });
+              resReturn(res, 200, {
+                data: { ...data, email },
+                user: find,
+                userStatus: "login",
+              });
+            }
+          );
+        }
+      }
     } catch (error) {
       console.log(error.message);
       res.status(222).send(error.message);

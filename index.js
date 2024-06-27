@@ -9,10 +9,7 @@ const checkerRouter = require("./router/CheckerRoute");
 const { databaseConnect } = require("./utils/DatabaseConnect");
 const moment = require("moment");
 const path = require("path");
-const { validate } = require("deep-email-validator");
-// const dns = require("dns");
-// const net = require("net");
-// const { Buffer } = require("buffer");
+const EmailValidator = require("email-deep-validator");
 
 app.use(
   cors({
@@ -40,16 +37,10 @@ app.get("/", async (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.get("/emails", async (req, res) => {
-  try {
-    const result = await validate("mdatick866@gmail.com");
-    res.status(200).send({ result });
-  } catch (error) {
-    console.error("Validation error is:", error);
-    res
-      .status(500)
-      .json({ error: "Email validation failed", details: error.message });
-  }
+app.get("/mail", async (req, res) => {
+  const emailValidator = new EmailValidator();
+  const data = await emailValidator.verify("mdatick866@gmail.com");
+  res.status(200).send(data);
 });
 
 app.use("/api/v1/gmail", checkerRouter);
