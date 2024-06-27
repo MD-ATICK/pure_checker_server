@@ -40,7 +40,7 @@ app.get("/", async (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.get("/email", async (req, res) => {
+app.get("/emails", async (req, res) => {
   try {
     const result = await validate("mdatick866@gmail.com");
     res.status(200).send({ result });
