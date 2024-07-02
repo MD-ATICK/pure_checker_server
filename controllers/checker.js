@@ -56,14 +56,10 @@ class checker {
               const userIp = await UserIp.findOneAndUpdate(
                 { ip },
                 { $inc: { freeCredit: -1 } },
-                { new: true }api_key="at_7avCGlfUhgBWoRADi9FNrA6FwBL0g"
-                port="9999"
-                jwt_secret="emailchecker2024"
-                app="test"
-                key="at_7avCGlfUhgBWoRADi9FNrA6FwBL0g"
+                { new: true }
               );
-              // if (!userIp)
-              //   return resReturn(res, 222, { err: "ip not a found." });
+              if (!userIp)
+                return resReturn(res, 222, { err: "ip not a found." });
               resReturn(res, 200, {
                 data: { ...data, email },
                 userIp,

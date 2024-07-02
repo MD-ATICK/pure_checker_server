@@ -11,6 +11,7 @@ const { databaseConnect } = require("./utils/DatabaseConnect");
 const path = require("path");
 const { resReturn } = require("./utils/utils");
 const { upload } = require("./utils/Multer");
+const { checkEmail } = require("./utils/emailValidator");
 
 const options = {
   origin: ["https://pure-checker-client.vercel.app", "http://localhost:5173"],
@@ -30,6 +31,15 @@ app.get("/hi", (req, res) =>
 
 app.post("/img-upload", upload.single("file"), (req, res) => {
   res.status(201).send({ msg: "upload successful", img: req?.file?.filename });
+});
+
+app.get("/test/:email", (req, res) => {
+  const { email } = req.params;
+
+  checkEmail(email, async (result) => {
+    console.log(result);
+    res.status(200).send(result);
+  });
 });
 
 app.use("/api/v1/gmail", checkerRouter);
