@@ -6,6 +6,7 @@ const cors = require("cors");
 const userRouter = require("./router/userRoute");
 const checkerRouter = require("./router/CheckerRoute");
 const postRouter = require("./router/postRoute");
+const maintenanceRouter = require("./router/MaintananceRoute");
 const { databaseConnect } = require("./utils/DatabaseConnect");
 const path = require("path");
 const { resReturn } = require("./utils/utils");
@@ -34,6 +35,7 @@ app.post("/img-upload", upload.single("file"), (req, res) => {
 app.use("/api/v1/gmail", checkerRouter);
 app.use("/api/v2/user", userRouter);
 app.use("/api/v3/post", postRouter);
+app.use("/api/v4/maintenance", maintenanceRouter);
 
 app.listen(port, () => {
   console.log("▶️  app listening on port" + " " + port + "!");

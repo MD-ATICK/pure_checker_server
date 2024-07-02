@@ -6,12 +6,13 @@ const paymentSchema = new mongoose.Schema(
     planType: String,
     price: Number,
     credit: Number,
-    userId : String,
+    userId: String,
     dayLimit: Number,
     currency: String,
-    status : {
-      type : String,
-      default : 'pending'
+    status: {
+      type: String,
+      default: "pending",
+      enum: ["pending", "success", "refund"],
     },
     paymentId: {
       type: String,
