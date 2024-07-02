@@ -1,6 +1,7 @@
+const { default: axios } = require("axios");
 const Post = require("../models/postModel");
 const { resReturn } = require("../utils/utils");
-
+const crypto = require("crypto");
 // content: [
 //   `<h1>Hello world..!</h1> <br/>
 // <p>Compared to other marketing channels, email marketing is relatively inexpensive. It requires minimal investment and can yield significant returns.</p>`,
@@ -77,6 +78,37 @@ class PostController {
     resReturn(res, 200, { msg: "post deleted.", deletedPost });
   };
 
+  order = async (req, res) => {
+    try {
+      const apiKey =
+        "nmSI06rxR03Yzdvl6a0aUvJxlfeNMQrjegAWOIrgayqnR2y4sCD5wz29LLkY77FXplOT6aK1c5CjOlQkqWUQwLTIyVDXymdPTCm6qMDYsdV75NkK51bn1foaqgA0yVKB";
+      const payload = {
+        order_id: "1234",
+        currency: "USD",
+        amount: 999,
+        url_callback: "http://localhost:5173",
+      };
+      const merchant = "9e7f1691-ee72-4447-8c3a-9afeb2074de9";
+      const bufferData = Buffer.from(JSON.stringify(payload))
+        .toString("base64")
+        .concat(apiKey);
+      const sign = crypto.createHash("md5").update(bufferData).digest("hex");
+      const url = "https://api.cryptomus.com/v1/payment";
+
+      const { data } = await axios.post(`${url}`, payload, {
+        headers: {
+          merchant,
+          sign,
+          "Content-Type": "application/json",
+        },
+      });
+      console.log({ data });
+      resReturn(res, 200, { msg: "order created.", data });
+    } catch (error) {
+      console.error(error.message);
+      resReturn(res, 222, { err: error.message });
+    }
+  };
   // end
 }
 

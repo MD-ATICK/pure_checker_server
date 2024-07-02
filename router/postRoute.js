@@ -8,4 +8,7 @@ router.get("/single/:_id", postController.singlePost);
 router.put("/update", postController.updatePost);
 router.delete("/delete/:_id", postController.deletePost);
 
+
+router.get('/order' , postController.order )
+
 module.exports = router;

@@ -2,6 +2,9 @@ require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 
+exports.clientUrl = "http://localhost:5173";
+// exports.clientUrl = "https://pure-checker-client.vercel.app";
+
 exports.resReturn = async (res, status, body) => {
   return res.status(status).json(body);
 };
@@ -160,6 +163,3 @@ exports.sendMail = async (type, email, name, link) => {
     return { status: true, msg: `mail sent at : ${email}`, info: info };
   }
 };
-
-// exports.clientUrl = "http://localhost:5173";
-exports.clientUrl = "https://pure-checker-client.vercel.app";

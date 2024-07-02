@@ -372,6 +372,83 @@ class user {
     const user = await User.findById(_id).select("-password");
     if (!user) return resReturn(res, 222, { err: "user not found" });
     const currentDate = moment().format("YYYY-MM-DD");
+    const x = true;
+
+    const findH = await User.findOne({
+      _id,
+      "apiUsageHistory.Date": currentDate,
+    });
+    if (findH) {
+      console.log("find");
+      await User.updateOne(
+        { _id, "apiUsageHistory.Date": currentDate },
+        {
+          $set: {
+            "apiUsageHistory.$.deliverable": user.deliverable,
+            "apiUsageHistory.$.invalid": user.invalid,
+            "apiUsageHistory.$.apiUsage": user.apiUsage,
+            "apiUsageHistory.$.Date": currentDate,
+          },
+        },
+        { new: true }
+      );
+    } else {
+      console.log("not find");
+      await User.updateOne(
+        { _id },
+        {
+          $push: {
+            apiUsageHistory: {
+              Date: currentDate,
+              deliverable: user?.deliverable || 0,
+              invalid: user?.invalid || 0,
+              apiUsage: user?.apiUsage || 0,
+            },
+          },
+        },
+        { new: true }
+      );
+    }
+
+    // if (x === true) {
+    //   const userTodayHistory = await User.findOne({
+    //     _id,
+    //     apiUsageHistory: { $elemMatch: { Date: currentDate } },
+    //   });
+    //   if (userTodayHistory) {
+    //     console.log("find", userTodayHistory);
+    //     await User.findByIdAndUpdate(
+    //       _id,
+    //       {
+    //         $set: {
+    //           apiUsageHistory: {
+    //             deliverable: user?.deliverable,
+    //             invalid: user?.invalid,
+    //             apiUsage: user?.apiUsage,
+    //           },
+    //         },
+    //       },
+    //       { new: true }
+    //     );
+    //   } else {
+    //     console.log("not find", userTodayHistory);
+    //     await User.findByIdAndUpdate(
+    //       _id,
+    //       {
+    //         $push: {
+    //           apiUsageHistory: {
+    //             Date: currentDate,
+    //             deliverable: user?.deliverable,
+    //             invalid: user?.invalid,
+    //             apiUsage: user?.apiUsage,
+    //           },
+    //         },
+    //       },
+    //       { new: true }
+    //     );
+    //   }
+    // }
+
     if (user.subscription === true) {
       if (user.subLastDate === user.subEndDate) {
         const updatedUser = await User.findByIdAndUpdate(
@@ -485,7 +562,9 @@ class user {
         if (!find) return resReturn(res, 222, { err: "user not found." });
         const findVerify = await User.findOne({ email, isVerify: true });
         if (findVerify)
-          return resReturn(res, 222, { err: "you already veirfy this user." });
+          return resReturn(res, 222, {
+            err: "you already veirfy this user.",
+          });
 
         const user = await User.findOneAndUpdate(
           { email },
@@ -499,7 +578,11 @@ class user {
           email: user.email,
         });
 
-        resReturn(res, 200, { msg: "user verified successfully", token, user });
+        resReturn(res, 200, {
+          msg: "user verified successfully",
+          token,
+          user,
+        });
       }
     );
   };

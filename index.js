@@ -8,7 +8,6 @@ const checkerRouter = require("./router/CheckerRoute");
 const postRouter = require("./router/postRoute");
 const { databaseConnect } = require("./utils/DatabaseConnect");
 const path = require("path");
-// const fileUpload = require("express-fileupload");
 const { resReturn } = require("./utils/utils");
 const { upload } = require("./utils/Multer");
 
