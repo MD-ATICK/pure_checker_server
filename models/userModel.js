@@ -3,8 +3,24 @@ const mongoose = require("mongoose");
 const userSchema = new mongoose.Schema(
   {
     name: String,
-    email: String,
-    password: String,
+    email: {
+      type: String,
+      unique: true,
+      required: true,
+    },
+    // accountType: {
+    //   type: String,
+    //   enum: ["normal", "google"],
+    //   default: "normal",
+    // },
+    isVerify: {
+      type: Boolean,
+      default: false,
+    },
+    password: {
+      type: String,
+      default: "googleHasNoPassword",
+    },
     credit: { type: Number, default: 100 },
     ip: String,
     subscription: {
@@ -15,10 +31,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    subPerDayCredit : {
-      type : Number,
-      default : 0
-    } ,
+    subPerDayCredit: {
+      type: Number,
+      default: 0,
+    },
     subLastDate: {
       type: String,
       default: "",
@@ -48,24 +64,24 @@ const userSchema = new mongoose.Schema(
       },
     ],
     country: {
-      type : String,
-      default : ''
+      type: String,
+      default: "",
     },
     address: {
-      type : String,
-      default : ''
+      type: String,
+      default: "",
     },
     zipCode: {
-      type : String,
-      default : ''
+      type: String,
+      default: "",
     },
     mobileNumber: {
-      type : Number,
-      default : ''
+      type: Number,
+      default: "",
     },
     city: {
-      type : String,
-      default : ''
+      type: String,
+      default: "",
     },
   },
 

@@ -1,50 +1,40 @@
 require("dotenv").config();
-const { default: axios } = require("axios");
 const express = require("express");
 const app = express();
 const port = process.env.port || 3000;
 const cors = require("cors");
 const userRouter = require("./router/userRoute");
 const checkerRouter = require("./router/CheckerRoute");
+const postRouter = require("./router/postRoute");
 const { databaseConnect } = require("./utils/DatabaseConnect");
-const moment = require("moment");
 const path = require("path");
-const EmailValidator = require("email-deep-validator");
+// const fileUpload = require("express-fileupload");
+const { resReturn } = require("./utils/utils");
+const { upload } = require("./utils/Multer");
 
-app.use(
-  cors({
-    origin: ["https://pure-checker-client.vercel.app", "http://localhost:5173"],
-    credentials: true,
-  })
+const options = {
+  origin: ["https://pure-checker-client.vercel.app", "http://localhost:5173"],
+  credentials: true,
+};
+
+databaseConnect();
+app.use(cors(options));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+app.get("/hi", (req, res) =>
+  resReturn(res, 200, { msg: path.join(__dirname) })
 );
 
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
-databaseConnect();
-app.use(express.static(path.join(__dirname, "public")));
-
-async function isValidEmailDomain(email) {
-  const domain = email.split("@")[1];
-  try {
-    const addresses = await dns.promises.resolve(domain, "MX");
-    return addresses.length > 0;
-  } catch (err) {
-    return false; // DNS lookup failed
-  }
-}
-
-app.get("/", async (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-app.get("/mail", async (req, res) => {
-  const emailValidator = new EmailValidator();
-  const data = await emailValidator.verify("mdatick866@gmail.com");
-  res.status(200).send(data);
+app.post("/img-upload", upload.single("file"), (req, res) => {
+  res.status(201).send({ msg: "upload successful", img: req?.file?.filename });
 });
 
 app.use("/api/v1/gmail", checkerRouter);
 app.use("/api/v2/user", userRouter);
+app.use("/api/v3/post", postRouter);
 
 app.listen(port, () => {
   console.log("▶️  app listening on port" + " " + port + "!");
