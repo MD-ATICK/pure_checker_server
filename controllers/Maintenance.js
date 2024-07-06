@@ -2,8 +2,8 @@ const Maintenance = require("../models/MaintananceModel");
 const { resReturn } = require("../utils/utils");
 
 class MaintenanceController {
+
   create = async (req, res) => {
-    // const { title, description } = req.body;
     try {
       const find = await Maintenance.findOne({ status: "open" });
       if (find)
@@ -19,34 +19,49 @@ class MaintenanceController {
   };
 
   remove = async (req, res) => {
-    // const { _id } = req.params;
-    // if (!_id) return resReturn(res, 222, { err: "_id not found" });
-    const find = await Maintenance.findOne({ status: "open" });
-    if (!find) return resReturn(res, 222, { err: "maintenance not found" });
-
-    const update = await Maintenance.findByIdAndUpdate(
-      find?._id,
-      { status: "closed" },
-      { new: true }
-    );
-    return resReturn(res, 200, { msg: " updated successfully", update });
+    try {
+      
+      const find = await Maintenance.findOne({ status: "open" });
+      if (!find) return resReturn(res, 222, { err: "maintenance not found" });
+  
+      const update = await Maintenance.findByIdAndUpdate(
+        find?._id,
+        { status: "closed" },
+        { new: true }
+      );
+      return resReturn(res, 200, { msg: " updated successfully", update });
+      
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   checking = async (req, res) => {
-    const find = await Maintenance.findOne({ status: "open" });
-    if (find) {
-      return resReturn(res, 200, {
-        msg: "have maintenance",
-        maintenance: find,
-      });
+    try {
+      
+      const find = await Maintenance.findOne({ status: "open" });
+      if (find) {
+        return resReturn(res, 200, {
+          msg: "have maintenance",
+          maintenance: find,
+        });
+      }
+      resReturn(res, 222, { msg: "not have maintenance" });
+      
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
     }
-    resReturn(res, 222, { msg: "not have maintenance" });
   };
 
   getAll = async (req, res) => {
-    const maintenances = await Maintenance.find({});
-
-    resReturn(res, 200, { msg: "all maintenance", maintenances });
+    try {
+      
+      const maintenances = await Maintenance.find({});
+      resReturn(res, 200, { msg: "all maintenance", maintenances });
+      
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 }
 

@@ -2,80 +2,98 @@ const { default: axios } = require("axios");
 const Post = require("../models/postModel");
 const { resReturn } = require("../utils/utils");
 const crypto = require("crypto");
-// content: [
-//   `<h1>Hello world..!</h1> <br/>
-// <p>Compared to other marketing channels, email marketing is relatively inexpensive. It requires minimal investment and can yield significant returns.</p>`,
-// ],
-
-// img: { type: String, required: true },
-// title: { type: String, required: true },
-// category: { type: String, required: true },
-// description: { type: String, required: true },
-// tags: [{ type: String }],
-// content: [{ type: String}]
 
 class PostController {
   allPost = async (req, res) => {
-    const posts = await Post.find({});
-    resReturn(res, 200, { msg: "posts get.", posts });
+    try {
+      const { page } = req.query;
+
+      const totalPosts = await Post.countDocuments({});
+
+      const posts = await Post.find({})
+        .skip((page - 1) * 10)
+        .limit(10);
+      resReturn(res, 200, {
+        msg: "posts get.",
+        posts,
+        count: totalPosts,
+      });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   singlePost = async (req, res) => {
-    const { _id } = req.params;
-    const post = await Post.findById(_id);
-    if (!post) return resReturn(res, 222, { err: "post not found!" });
+    try {
+      const { _id } = req.params;
+      const post = await Post.findById(_id);
+      if (!post) return resReturn(res, 222, { err: "post not found!" });
 
-    const similar = await Post.find({
-      category: post?.category,
-      _id: { $ne: _id },
-    });
-    resReturn(res, 200, { msg: "single post get.", post, similar });
+      const similar = await Post.find({
+        category: post?.category,
+        _id: { $ne: _id },
+      });
+      resReturn(res, 200, { msg: "single post get.", post, similar });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   updatePost = async (req, res) => {
-    const { _id, img, title, category, description, tags, content } = req.body;
-    console.log(req.body);
+    try {
+      const { _id, img, title, category, description, tags, content } =
+        req.body;
 
-    const find = await Post.findById(_id);
-    if (!find) return resReturn(res, 222, { err: "post not found!" });
+      const find = await Post.findById(_id);
+      if (!find) return resReturn(res, 222, { err: "post not found!" });
 
-    const updatedPost = await Post.findByIdAndUpdate(
-      _id,
-      { img, title, category, description, tags, content },
-      { new: true }
-    );
-    resReturn(res, 201, {
-      msg: "updated post successfully",
-      post: updatedPost,
-    });
+      const updatedPost = await Post.findByIdAndUpdate(
+        _id,
+        { img, title, category, description, tags, content },
+        { new: true }
+      );
+      resReturn(res, 201, {
+        msg: "updated post successfully",
+        post: updatedPost,
+      });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   createPost = async (req, res) => {
-    const { img, title, category, description, tags, content } = req.body;
-    console.log("createPost", req.body);
+    try {
+      const { img, title, category, description, tags, content } = req.body;
 
-    const find = await Post.findOne({ title });
-    if (find) return resReturn(res, 222, { err: "this post has already been" });
+      const find = await Post.findOne({ title });
+      if (find)
+        return resReturn(res, 222, { err: "this post has already been" });
 
-    const post = await Post.create({
-      img,
-      title,
-      category,
-      description,
-      tags: tags,
-      content: content,
-    });
-    resReturn(res, 201, { msg: "post created.", post: post });
+      const post = await Post.create({
+        img,
+        title,
+        category,
+        description,
+        tags: tags,
+        content: content,
+      });
+      resReturn(res, 201, { msg: "post created.", post: post });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   deletePost = async (req, res) => {
-    const { _id } = req.params;
-    console.log(_id);
-    const find = await Post.findById(_id);
-    if (!find) return resReturn(res, 222, { error: "not found" });
-    const deletedPost = await Post.findByIdAndDelete(_id);
+    try {
+      const { _id } = req.params;
+      const find = await Post.findById(_id);
+      if (!find) return resReturn(res, 222, { error: "not found" });
+      const deletedPost = await Post.findByIdAndDelete(_id);
 
-    resReturn(res, 200, { msg: "post deleted.", deletedPost });
+      resReturn(res, 200, { msg: "post deleted.", deletedPost });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   order = async (req, res) => {
@@ -102,10 +120,8 @@ class PostController {
           "Content-Type": "application/json",
         },
       });
-      console.log({ data });
       resReturn(res, 200, { msg: "order created.", data });
     } catch (error) {
-      console.error(error.message);
       resReturn(res, 222, { err: error.message });
     }
   };

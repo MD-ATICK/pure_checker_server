@@ -31,22 +31,9 @@ class checker {
       const { email } = req.query;
       const bearerToken = req.headers.authorization;
       const token = bearerToken?.split(" ")[1];
-      // const data = await validate(email);
-      // "data": {
-      //         "email": "atick@gmail.com",
-      //         "format": true,
-      //         "disposable": false,
-      //         "domain": true,
-      //         "exists": false,
-      //         "reason": "Email does not exist (SMTP check)",
-      //         "mxServer": "alt1.gmail-smtp-in.l.google.com",
-      //         "name": "atick",
-      //         "role": "user"
-      //     },
 
       checkEmail(email, async (result) => {
         if (!res.headersSent) {
-          // res.send({ email, result });
           const data = result;
 
           if (data) {
@@ -66,7 +53,6 @@ class checker {
                 userStatus: "default",
               });
             } else if (token !== "null") {
-              // const smtp = data.exists;
               const smtp = data.exists;
               await jwt.verify(
                 token,
@@ -102,65 +88,6 @@ class checker {
     }
   };
 
-  // bulksCheck = async (req, res) => {
-
-  //   const { bulks } = req.body;
-  //   console.log("01", bulks);
-  //   const { _id } = req.user;
-  //   let result = [];
-  //   let bulkStg = "";
-
-  //   const user = await User.findById(_id);
-  //   console.log("1");
-  //   if (user.subscription === true || user.payAsGo === true) {
-  //     if (user.credit >= bulks.length) {
-  //       console.log("2");
-  //       for (const email of bulks) {
-  //         console.log("4");
-  //         // const data = await validate(email);
-  //         checkEmail(
-  //           email,
-  //           async (resultData) => {
-  //             // if (!res.headersSent) {
-  //             console.log(`Result for ${email}: ${resultData}`);
-  //             // res.send({ email, result });
-  //             const data = resultData;
-  //             result = [
-  //               ...result,
-  //               {
-  //                 email,
-  //                 smtp: data.exists,
-  //                 format: data.format,
-  //                 disposable: data.disposable,
-  //               },
-  //             ];
-  //             bulkStg += `[${data.exists ? "Exist" : "Not Exist"}] ${email}\n`;
-
-  //             const smtp = data.exists;
-
-  //             await User.findByIdAndUpdate(
-  //               _id,
-  //               {
-  //                 $inc: {
-  //                   credit: -1,
-  //                   invalid: smtp === false && 1,
-  //                   deliverable: smtp === true && 1,
-  //                 },
-  //               },
-  //               { new: true }
-  //             );
-  //           }
-  //           // }
-  //         );
-  //       }
-  //       const newFind = await User.findById(_id);
-  //       return resReturn(res, 201, { result, user: newFind, bulkStg });
-  //     }
-  //     return resReturn(res, 222, { err: "have not credit." });
-  //   }
-  //   resReturn(res, 222, { err: "subscription not running." });
-  // };
-
   bulksCheck = async (req, res) => {
     const { bulks } = req.body;
     const { _id } = req.user;
@@ -171,7 +98,6 @@ class checker {
 
     if (user.subscription === true || user.payAsGo === true) {
       if (user.credit >= bulks.length) {
-
         // Array to store all the promises
         const promises = bulks.map(
           (email) =>
@@ -239,7 +165,6 @@ class checker {
           return resReturn(res, 222, { err: "credit ended. buy a plan now" });
         }
 
-
         try {
           const result = await new Promise((resolve, reject) => {
             checkEmail(email, (resultData) => {
@@ -279,114 +204,6 @@ class checker {
       return resReturn(res, 222, { err: error.message });
     }
   };
-
-  // singleEmailApi = async (req, res) => {
-  //   const { key, email } = req.query;
-  //   console.log("hi", req.query);
-  //   try {
-  //     const api = await Api.findOne({ apiKey: key });
-
-  //     if (!api)
-  //       return resReturn(res, 222, { err: "s: api check: api not found" });
-
-  //     const user = await User.findById(api.userId);
-
-  //     if (user?.subscription === true || user?.payAsGo === true) {
-  //       if (user?.credit === 0)
-  //         return resReturn(res, 222, { err: " credit ended. buy a plan now" });
-
-  //       console.log("2");
-  //       checkEmail(email, async (result) => {
-  //         console.log("3", res.headerSent);
-  //         if (!res.headersSent) {
-  //           console.log("4");
-  //           console.log(`Result for ${email}: ${result}`);
-  //           // res.send({ email, result });
-  //           const data = result;
-  //           const smtp = data.exists;
-  //           await User.findByIdAndUpdate(
-  //             api.userId,
-  //             { $inc: { credit: -1, apiUsage: 1 } },
-  //             { new: true }
-  //           );
-
-  //           await Api.findByIdAndUpdate(api._id, {
-  //             $inc: {
-  //               invalid: smtp === false && 1,
-  //               deliverable: smtp === true && 1,
-  //               apiUsage: 1,
-  //             },
-  //           });
-
-  //           return resReturn(res, 200, { data });
-  //         }
-  //       });
-  //     }
-  //     return resReturn(res, 222, { err: " subscription ended." });
-  //   } catch (error) {
-  //     resReturn(res, 222, { err: error.message });
-  //   }
-  // };
-
-  // Bulk email  api
-  // bulkEmailApi = async (req, res) => {
-  //   const { key } = req.query;
-  //   const bulks = req.body;
-  //   console.log(key);
-  //   try {
-  //     let result = [];
-  //     const api = await Api.findOne({ apiKey: key });
-  //     console.log(api);
-  //     if (!api)
-  //       return resReturn(res, 222, { err: "s: api check: api not found" });
-
-  //     const user = await User.findById(api.userId);
-  //     if (!user)
-  //       return resReturn(res, 222, { err: "s: api check: user not found" });
-
-  //     if (user?.subscription === false || user?.payAsGo === false)
-  //       return resReturn(res, 222, { err: " subscription ended." });
-
-  //     if (bulks === "undefined" || !bulks || bulks.length === 0)
-  //       return resReturn(res, 222, { err: "bulks not sended" });
-  //     if (user.credit < bulks.length)
-  //       return resReturn(res, 222, { err: "have not enough credits" });
-
-  //     for (const email of bulks) {
-  //       console.log(email);
-  //       checkEmail(email, async (result) => {
-  //         if (!res.headersSent) {
-  //           console.log(`Result for ${email}: ${result}`);
-  //           // res.send({ email, result });
-  //           const data = result;
-  //         }
-  //         const smtp = data.exists;
-  //         result = [...result, data];
-
-  //         await User.findByIdAndUpdate(
-  //           api.userId,
-  //           { $inc: { credit: -1, apiUsage: 1 } },
-  //           { new: true }
-  //         );
-
-  //         await Api.findByIdAndUpdate(
-  //           api._id,
-  //           {
-  //             $inc: {
-  //               invalid: smtp === false && 1,
-  //               deliverable: smtp === true && 1,
-  //               apiUsage: 1,
-  //             },
-  //           },
-  //           { new: true }
-  //         );
-  //       });
-  //     }
-  //     return resReturn(res, 200, { result });
-  //   } catch (error) {
-  //     resReturn(res, 222, { err: error.message });
-  //   }
-  // };
 
   bulkEmailApi = async (req, res) => {
     const { key } = req.query;

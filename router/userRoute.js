@@ -18,8 +18,12 @@ router.get("/block/:_id", user.block);
 router.post("/add-user", user.addUser); // email auth
 router.post("/adjust/:_id", user.adjustUser);
 
+// user 2 step authentication
+router.get("/otpSent/:email", user.sendOTP);
+router.post("/verifyOTP", user.verifyOTP);
+
 //  ip
-router.get("/ip-free-credit", user.ip);
+router.get("/ip-free-credit", user.authByIp);
 
 // plan
 router.get("/get-volume", Volume.get);
@@ -44,6 +48,5 @@ router.post("/contactUs", user.contactUSMail);
 router.post("/verify-mail-sent/", user.verifyMailSent);
 router.post("/forget-password/:token", user.forgetPassword);
 
-router.post("/binance-order", user.binanceOrder);
 
 module.exports = router;

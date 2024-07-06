@@ -37,7 +37,6 @@ app.get("/test/:email", (req, res) => {
   const { email } = req.params;
 
   checkEmail(email, async (result) => {
-    console.log(result);
     res.status(200).send(result);
   });
 });

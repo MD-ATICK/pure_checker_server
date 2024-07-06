@@ -1,6 +1,7 @@
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const User = require("../models/userModel");
 
 exports.clientUrl = "http://localhost:5173";
 // exports.clientUrl = "https://pure-checker-client.vercel.app";
@@ -16,6 +17,23 @@ exports.tokenCreate = async (user) => {
   return token;
 };
 
+exports.roleCheck = async (req, res, next) => {
+  try {
+    const _id = req.user._id;
+    if (!_id) return this.resReturn(res, 222, { err: "_id not found." });
+
+    const user = await User.findById(_id);
+    if (!user) return this.resReturn(res, 222, { err: "user not found." });
+
+    if (user.role === "admin") {
+      return next();
+    }
+
+    this.resReturn(res, 222, { err: "user access not allowed." });
+  } catch (error) {
+    this.resReturn(res, 222, { err: error.message });
+  }
+};
 exports.userAuthorize = async (req, res, next) => {
   const bearerToken = req.headers.authorization;
   try {
@@ -125,6 +143,42 @@ exports.sendMail = async (type, email, name, link) => {
       html,
     });
     return { status: true, msg: `mail sent at : ${email}`, info: info };
+  } else if (type === "twoFector") {
+    const html = `<table style="width: 100%; padding: 30px;">
+    <tr>
+      <td>
+        <table style="max-width: 450px; width: 100%; background: #e6ece9; margin: auto;">
+          <tr>
+            <td style="background: blue; height: 80px; text-align: center;">
+              <h1 style={{ fontSize: '2rem',color :'white' , fontWeight : '600'}}>Pure Checker</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px; border-top: 6px solid #09316D;">
+              <p><span style="font-weight: 600; font-size: 18px;">Customer Service,</span></p>
+              <div style={{ fontSize: '15px' }}>${link}</div>
+              <p style="font-size: 14px;">If this attempt was not you, email <span style="font-weight: 600;">support@example.com</span> so we can assist you.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background: blue; color: #e6ece9; font-size: 14px; text-align: center; padding: 20px 0;">
+              <p>Pure Checker, Inc</p>
+              <p>San Francisco CA 68592</p>
+              <p>&copy; 2024</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>`;
+
+    const info = await transporter.sendMail({
+      from: "support@pureChecker.com",
+      to: email,
+      subject: "Pure Checker customer mail",
+      html,
+    });
+    return;
   } else {
     const html = `<table style="width: 100%; padding: 30px;">
     <tr>
@@ -156,7 +210,7 @@ exports.sendMail = async (type, email, name, link) => {
 
     const info = await transporter.sendMail({
       from: "support@pureChecker.com",
-      to: "atick.business.info@gmail.com",
+      to: email,
       subject: "Pure Checker customer mail",
       html,
     });

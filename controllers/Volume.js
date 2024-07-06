@@ -4,10 +4,11 @@ const { resReturn } = require("../utils/utils");
 class VolumeController {
   add = async (req, res) => {
     try {
-      const { planType, totalCredits, price } = req.body;
+      const { planType, totalCredits, perDay, price } = req.body;
       const volume = await Volume.create({
         planType,
         totalCredits,
+        perDay,
         price,
       });
       resReturn(res, 201, { msg: "created volume", volume });
@@ -16,7 +17,6 @@ class VolumeController {
     }
   };
 
-  
   get = async (req, res) => {
     try {
       const volumes = await Volume.find({});
@@ -25,7 +25,6 @@ class VolumeController {
       resReturn(res, 222, { err: err.message });
     }
   };
-
 
   delete = async (req, res) => {
     try {

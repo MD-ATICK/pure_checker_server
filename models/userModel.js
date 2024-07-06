@@ -8,11 +8,10 @@ const userSchema = new mongoose.Schema(
       unique: true,
       required: true,
     },
-    // accountType: {
-    //   type: String,
-    //   enum: ["normal", "google"],
-    //   default: "normal",
-    // },
+    twoFectorAuthSave: {
+      type: Boolean,
+      default: false,
+    },
     isVerify: {
       type: Boolean,
       default: false,
@@ -30,6 +29,10 @@ const userSchema = new mongoose.Schema(
     payAsGo: {
       type: Boolean,
       default: false,
+    },
+    subTotalCredit: {
+      type: Number,
+      default: 0,
     },
     subPerDayCredit: {
       type: Number,

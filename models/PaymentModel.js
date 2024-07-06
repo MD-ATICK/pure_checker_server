@@ -6,7 +6,10 @@ const paymentSchema = new mongoose.Schema(
     planType: String,
     price: Number,
     credit: Number,
-    userId: String,
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+    },
     dayLimit: Number,
     currency: String,
     status: {

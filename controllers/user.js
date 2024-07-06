@@ -14,6 +14,7 @@ const Plan = require("../models/PricingModel");
 const Api = require("../models/ApiModel");
 const Payment = require("../models/PaymentModel");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 const Binance = require("node-binance-api");
 
@@ -24,82 +25,134 @@ const binance = new Binance().options({
 });
 
 class user {
-  binanceOrder = async (req, res) => {
-    const { symbol, quantity, price } = req.body;
-
-    await binance
-      .order({
-        symbol: symbol,
-        side: "BUY",
-        type: "LIMIT",
-        quantity: quantity,
-        price: price,
-      })
-      .then((order) => {
-        res.status(201).json(order);
-      })
-      .catch((error) => {
-        res.status(500).json({ error: error.message });
+  sendOTP = async (req, res) => {
+    try {
+      const { email } = req.params;
+      if (!email) return resReturn(res, 222, { err: "Invalid email" });
+      let otp = "";
+      for (let i = 0; i < 6; i++) {
+        otp += Math.round(Math.random() * 9);
+      }
+      const secret = `${process.env.jwt_secret}`;
+      const tokenTwoFA = await jwt.sign({ email, otp }, secret, {
+        expiresIn: "15m",
       });
+      const find = await User.findOne({ email });
+      if (!find) return resReturn(res, 222, { err: "user not found" });
+
+      await sendMail("twoFector", email, find?.name || "John", otp);
+
+      resReturn(res, 200, { tokenTwoFA });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
+  };
+
+  verifyOTP = async (req, res) => {
+    try {
+      const { email, otp, tokenTwoFA, twoFectorAuthSave } = req.body;
+      const find = await User.findOne({ email });
+      if (!find)
+        return resReturn(res, 222, { err: "user not exist with this email" });
+      if (!otp || otp.length < 6)
+        return resReturn(res, 222, { err: "user not exist with this email" });
+
+      const secret = `${process.env.jwt_secret}`;
+      await jwt.verify(tokenTwoFA, secret, async (err, verifiedJwt) => {
+        if (err) return resReturn(res, 222, { err: err.message });
+        if (otp !== verifiedJwt.otp)
+          return resReturn(res, 222, { err: "otp not valid" });
+        if (twoFectorAuthSave) {
+          await User.updateOne(
+            { email: verifiedJwt.email },
+            { twoFectorAuthSave: true }
+          );
+        }
+        const find = await User.findOne({ email: verifiedJwt.email });
+        const token = await tokenCreate({
+          _id: find._id,
+          role: find.role,
+          email: find.email,
+        });
+        resReturn(res, 201, {
+          msg: "two fector auth succesed.",
+          user: find,
+          token,
+        });
+      });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   verifyMailSent = async (req, res) => {
-    const { email } = req.body;
-    const find = await User.findOne({ email });
-    if (!find)
-      return resReturn(res, 222, { err: "user not exist with this email" });
+    try {
+      const { email } = req.body;
+      const find = await User.findOne({ email });
+      if (!find)
+        return resReturn(res, 222, { err: "user not exist with this email" });
 
-    console.log("emailvlaid", find);
-    const gmailAuthToken = await jwt.sign({ email }, process.env.jwt_secret, {
-      expiresIn: "2m",
-    });
+      const gmailAuthToken = await jwt.sign({ email }, process.env.jwt_secret, {
+        expiresIn: "2m",
+      });
 
-    const link = `${clientUrl}/email-validation/${gmailAuthToken}`;
-    const mailData = await sendMail(
-      "verify",
-      email,
-      find?.name || "John",
-      link
-    );
+      const link = `${clientUrl}/email-validation/${gmailAuthToken}`;
+      const mailData = await sendMail(
+        "verify",
+        email,
+        find?.name || "John",
+        link
+      );
 
-    if (mailData.status === true) {
-      return res.status(201).send(mailData);
+      if (mailData.status === true) {
+        return res.status(201).send(mailData);
+      }
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
     }
   };
 
   mailSent = async (req, res) => {
-    const { email } = req.body;
-    const find = await User.findOne({ email });
-    if (!find)
-      return resReturn(res, 222, { err: "user not exist with this email" });
+    try {
+      const { email } = req.body;
+      const find = await User.findOne({ email });
+      if (!find)
+        return resReturn(res, 222, { err: "user not exist with this email" });
 
-    const newSecret = `${process.env.jwt_secret}${find.password}`;
-    const token = await jwt.sign({ _id: find._id }, newSecret, {
-      expiresIn: "3m",
-    });
+      const newSecret = `${process.env.jwt_secret}${find.password}`;
+      const token = await jwt.sign({ _id: find._id }, newSecret, {
+        expiresIn: "3m",
+      });
 
-    const link = `${clientUrl}/forget-password/${find.email}/${token}`;
+      const link = `${clientUrl}/forget-password/${find.email}/${token}`;
 
-    const mailData = await sendMail("forget", email, find?.name, link);
+      const mailData = await sendMail("forget", email, find?.name, link);
 
-    if (mailData.status === true) {
-      return res.status(201).send(mailData);
+      if (mailData.status === true) {
+        return res.status(201).send(mailData);
+      }
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
     }
   };
 
   contactUSMail = async (req, res) => {
-    const { name, email, body } = req.body;
-    const newBody = `<p>Name: ${name}  </p> <p>Email: ${email}</p> <p>Message: ${body}</p>`;
+    try {
+      const { name, email, body } = req.body;
+      const newBody = `<p>Name: ${name}  </p> <p>Email: ${email}</p> <p>Message: ${body}</p>`;
 
-    const mailData = await sendMail(
-      "support",
-      "mdatick866@gmail.com",
-      name,
-      newBody
-    );
+      const mailData = await sendMail(
+        "support",
+        "mdatick866@gmail.com",
+        name,
+        newBody
+      );
 
-    if (mailData.status === true) {
-      res.status(201).send({ msg: "Thanks for sending your opinion.❤️" });
+      if (mailData.status === true) {
+        res.status(201).send({ msg: "Thanks for sending your opinion.❤️" });
+      }
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
     }
   };
 
@@ -118,8 +171,6 @@ class user {
 
         return resReturn(res, 223, { err: err.message });
       }
-      // const { data } = await axios.get("https://jsonip.com");
-      // const ip = data.ip;
       const { _id } = verifiedJwt;
       const bcryptPassword = bcrypt.hashSync(password, 10);
       const updateUser = await User.findByIdAndUpdate(
@@ -136,117 +187,135 @@ class user {
   };
 
   getPayments = async (req, res) => {
-    const { _id } = req.user;
+    try {
+      const { _id } = req.user;
 
-    const payments = await Payment.find({ userId: _id });
-    resReturn(res, 200, { msg: "payment all get", payments });
+      const payments = await Payment.find({ userId: _id });
+      resReturn(res, 200, { msg: "payment all get", payments });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   getAllPayments = async (req, res) => {
-    const payments = await Payment.find({});
-    resReturn(res, 200, { msg: "payment all get", payments });
+    try {
+      const { page } = req.query;
+      const count = await Payment.countDocuments({});
+
+      const payments = await Payment.find({})
+        .populate("userId")
+        .skip((page - 1) * 10)
+        .limit(10);
+
+      resReturn(res, 200, { msg: "payment all get", payments, count });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   getApis = async (req, res) => {
-    const { _id } = req.user;
+    try {
+      const { _id } = req.user;
 
-    const allApi = await Api.find({ userId: _id });
-    resReturn(res, 200, { msg: "api all get", allApi });
+      const allApi = await Api.find({ userId: _id });
+      resReturn(res, 200, { msg: "api all get", allApi });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   createApi = async (req, res) => {
-    const { apiName } = req.body;
-    const { _id } = req.user;
+    try {
+      const { apiName } = req.body;
+      const { _id } = req.user;
 
-    const newApi = await Api.create({
-      userId: _id,
-      apiName,
-    });
+      const newApi = await Api.create({
+        userId: _id,
+        apiName,
+      });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
 
     resReturn(res, 201, { msg: "api created", newApi });
   };
 
   buyPlan = async (req, res) => {
-    const { _id } = req.user;
-    const { price, planType, totalCredits } = req.body;
-    let user;
-    user = await User.findById(_id);
+    try {
+      const { _id } = req.user;
+      const { price, planType, totalCredits, perDay } = req.body;
+      let user;
+      user = await User.findById(_id);
 
-    if (user.subscription === true)
-      return resReturn(res, 222, { err: "already running subscription" });
+      if (user.subscription === true)
+        return resReturn(res, 222, { err: "already running subscription" });
 
-    if (planType === "subscription") {
-      const perDay = Math.floor(totalCredits / 30);
-      user = await User.findByIdAndUpdate(
+      if (planType === "subscription") {
+        user = await User.findByIdAndUpdate(
+          _id,
+          {
+            subscription: true,
+            credit: Number(user.credit) + Number(perDay),
+            subPerDayCredit: perDay,
+            subTotalCredit: totalCredits,
+            subLastDate: moment().format("YYYY-MM-DD"),
+            subEndDate: moment().add(30, "days").format("YYYY-MM-DD"),
+          },
+          { new: true }
+        );
+      } else if (planType === "payAsGo") {
+        user = await User.findByIdAndUpdate(
+          _id,
+          {
+            credit: Number(user.credit) + Number(totalCredits),
+            payAsGo: true,
+            subscription: false,
+            subPerDayCredit: 0,
+            subTotalCredit: 0,
+            subLastDate: "",
+            subEndDate: "",
+          },
+          { new: true }
+        );
+      }
+
+      const payment = await Payment.create({
+        planType,
+        price,
+        dayLimit: planType === "subscription" ? 30 : 365,
+        currency: "USD",
+        credit: totalCredits,
+        userId: _id,
+      });
+
+      resReturn(res, 201, { msg: "buy plan" + planType, user, payment });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
+  };
+
+  subscription = async (req, res) => {
+    try {
+      const { _id } = req.user;
+      const user = await User.findByIdAndUpdate(
         _id,
         {
           subscription: true,
-          credit: Number(user.credit) + Number(perDay),
-          subPerDayCredit: perDay,
+          credit: 2500,
           subLastDate: moment().format("YYYY-MM-DD"),
           subEndDate: moment().add(30, "days").format("YYYY-MM-DD"),
         },
         { new: true }
       );
-    } else if (planType === "payAsGo") {
-      user = await User.findByIdAndUpdate(
-        _id,
-        {
-          credit: Number(user.credit) + Number(totalCredits),
-          payAsGo: true,
-          subscription: false,
-          subPerDayCredit: 0,
-          subLastDate: "",
-          subEndDate: "",
-        },
-        { new: true }
-      );
+      return resReturn(res, 200, { msg: "subscription started", user });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
     }
-
-    const payment = await Payment.create({
-      planType,
-      price,
-      dayLimit: planType === "subscription" ? 30 : 365,
-      currency: "USD",
-      credit: totalCredits,
-      userId: _id,
-    });
-
-    resReturn(res, 201, { msg: "buy plan" + planType, user, payment });
-  };
-
-  subscription = async (req, res) => {
-    const { _id } = req.user;
-    const user = await User.findByIdAndUpdate(
-      _id,
-      {
-        subscription: true,
-        credit: 2500,
-        subLastDate: moment().format("YYYY-MM-DD"),
-        subEndDate: moment().add(30, "days").format("YYYY-MM-DD"),
-      },
-      { new: true }
-    );
-    return resReturn(res, 200, { msg: "subscription started", user });
   };
 
   createPlan = async (req, res) => {
-    const {
-      planType,
-      day,
-      currency,
-      volumes,
-      type,
-      payment,
-      description,
-      question,
-      volumePrompt,
-      customVolumePrompt,
-      features,
-    } = req.body;
-
-    if (planType === "subscription") {
-      const newPlan = await Plan.create({
+    try {
+      const {
         planType,
         day,
         currency,
@@ -258,24 +327,42 @@ class user {
         volumePrompt,
         customVolumePrompt,
         features,
-      });
+      } = req.body;
 
-      resReturn(res, 201, { msg: "plan subscription created", newPlan });
-    } else if (planType === "payAsGo") {
-      const newPlan = await Plan.create({
-        planType,
-        day,
-        currency,
-        volumes,
-        type,
-        payment,
-        description,
-        question,
-        volumePrompt,
-        customVolumePrompt,
-        features,
-      });
-      resReturn(res, 201, { msg: "plan payAsGo created", newPlan });
+      if (planType === "subscription") {
+        const newPlan = await Plan.create({
+          planType,
+          day,
+          currency,
+          volumes,
+          type,
+          payment,
+          description,
+          question,
+          volumePrompt,
+          customVolumePrompt,
+          features,
+        });
+
+        resReturn(res, 201, { msg: "plan subscription created", newPlan });
+      } else if (planType === "payAsGo") {
+        const newPlan = await Plan.create({
+          planType,
+          day,
+          currency,
+          volumes,
+          type,
+          payment,
+          description,
+          question,
+          volumePrompt,
+          customVolumePrompt,
+          features,
+        });
+        resReturn(res, 201, { msg: "plan payAsGo created", newPlan });
+      }
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
     }
   };
 
@@ -301,213 +388,202 @@ class user {
       const plans = await Plan.find({});
       resReturn(res, 200, { msg: "plan all get", plans });
     } catch (error) {
-      console.log(error.message);
+      resReturn(res, 222, { err: error.message });
     }
   };
 
-  ip = async (req, res) => {
-    const {
-      data: { ip },
-    } = await axios.get("https://jsonip.com");
+  authByIp = async (req, res) => {
+    try {
+      const {
+        data: { ip },
+      } = await axios.get("https://jsonip.com");
 
-    let userIp;
-    userIp = await UserIp.findOne({ ip });
-    if (!userIp) {
-      userIp = await UserIp.create({ ip });
+      let userIp;
+      userIp = await UserIp.findOne({ ip });
+      if (!userIp) {
+        userIp = await UserIp.create({ ip });
+      }
+      resReturn(res, 200, { userIp: userIp });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
     }
-    resReturn(res, 200, { userIp: userIp });
   };
 
   block = async (req, res) => {
-    const _id = req.params._id;
-    // const user = req.user;
-    // if (user.role === "admin")
-    //   return resReturn(res, 222, { err: "only admin can block user." });
+    try {
+      const _id = req.params._id;
+      const admin = await User.findById(req.user._id);
+      if (!admin || admin?.role === "user")
+        return resReturn(res, 222, { err: "only admin can block user." });
 
-    const userFind = await User.findById(_id);
-    if (!userFind) return resReturn(res, 222, { err: "user not found." });
+      const user = await User.findById(_id);
+      const updatedUser = await User.findByIdAndUpdate(
+        _id,
+        { block: !user.block },
+        { new: true }
+      );
 
-    const updatedUser = await User.findByIdAndUpdate(
-      _id,
-      { block: !userFind.block },
-      { new: true }
-    );
-
-    return resReturn(res, 200, { msg: "user ban unban", updatedUser });
+      return resReturn(res, 200, { msg: "user ban unban", updatedUser });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   addUser = async (req, res) => {
-    const { name, email, password } = req.body;
+    try {
+      const { name, email, password } = req.body;
 
-    const find = await User.findOne({ email });
-    if (find) return resReturn(res, 222, { err: "user already created." });
+      const find = await User.findOne({ email });
+      if (find) return resReturn(res, 222, { err: "user already created." });
 
-    const user = await User.create({
-      name,
-      email,
-      password: bcrypt.hashSync(password, 10),
-    });
+      const user = await User.create({
+        name,
+        email,
+        password: bcrypt.hashSync(password, 10),
+      });
 
-    resReturn(res, 201, { msg: "user created by admin", user });
+      resReturn(res, 201, { msg: "user created by admin", user });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   totalMailCheck = async (req, res) => {
-    // deliverable: Number,
-    // invalid: Number,
-    // apiUsage: Number,
-    const users = await User.find({});
-    let totalMailCheck = 0;
-    users.map(
-      (u) =>
-        (totalMailCheck +=
-          Number(u?.deliverable || 0) +
-          Number(u?.invalid || 0) +
-          Number(u?.apiUsage || 0))
-    );
-    res.status(200).send({ msg: "mail check total", totalMailCheck });
+    try {
+      const users = await User.find({});
+      let totalMailCheck = 0;
+      users.map(
+        (u) =>
+          (totalMailCheck +=
+            Number(u?.deliverable || 0) +
+            Number(u?.invalid || 0) +
+            Number(u?.apiUsage || 0))
+      );
+      res.status(200).send({ msg: "mail check total", totalMailCheck });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   auth = async (req, res) => {
-    const { _id } = req.user;
-    const user = await User.findById(_id).select("-password");
-    if (!user) return resReturn(res, 222, { err: "user not found" });
-    const currentDate = moment().format("YYYY-MM-DD");
-    const x = true;
+    try {
+      const { _id } = req.user;
+      const user = await User.findById(_id).select("-password");
+      if (!user) return resReturn(res, 222, { err: "user not found" });
+      const currentDate = moment().format("YYYY-MM-DD");
 
-    const findH = await User.findOne({
-      _id,
-      "apiUsageHistory.Date": currentDate,
-    });
-    if (findH) {
-      console.log("find");
-      await User.updateOne(
-        { _id, "apiUsageHistory.Date": currentDate },
-        {
-          $set: {
-            "apiUsageHistory.$.deliverable": user.deliverable,
-            "apiUsageHistory.$.invalid": user.invalid,
-            "apiUsageHistory.$.apiUsage": user.apiUsage,
-            "apiUsageHistory.$.Date": currentDate,
-          },
-        },
-        { new: true }
-      );
-    } else {
-      console.log("not find");
-      await User.updateOne(
-        { _id },
-        {
-          $push: {
-            apiUsageHistory: {
-              Date: currentDate,
-              deliverable: user?.deliverable || 0,
-              invalid: user?.invalid || 0,
-              apiUsage: user?.apiUsage || 0,
+      const findH = await User.findOne({
+        _id,
+        "apiUsageHistory.Date": currentDate,
+      });
+      if (findH) {
+        await User.updateOne(
+          { _id, "apiUsageHistory.Date": currentDate },
+          {
+            $set: {
+              "apiUsageHistory.$.deliverable": user.deliverable,
+              "apiUsageHistory.$.invalid": user.invalid,
+              "apiUsageHistory.$.apiUsage": user.apiUsage,
+              "apiUsageHistory.$.Date": currentDate,
             },
           },
-        },
-        { new: true }
-      );
-    }
-
-    // if (x === true) {
-    //   const userTodayHistory = await User.findOne({
-    //     _id,
-    //     apiUsageHistory: { $elemMatch: { Date: currentDate } },
-    //   });
-    //   if (userTodayHistory) {
-    //     console.log("find", userTodayHistory);
-    //     await User.findByIdAndUpdate(
-    //       _id,
-    //       {
-    //         $set: {
-    //           apiUsageHistory: {
-    //             deliverable: user?.deliverable,
-    //             invalid: user?.invalid,
-    //             apiUsage: user?.apiUsage,
-    //           },
-    //         },
-    //       },
-    //       { new: true }
-    //     );
-    //   } else {
-    //     console.log("not find", userTodayHistory);
-    //     await User.findByIdAndUpdate(
-    //       _id,
-    //       {
-    //         $push: {
-    //           apiUsageHistory: {
-    //             Date: currentDate,
-    //             deliverable: user?.deliverable,
-    //             invalid: user?.invalid,
-    //             apiUsage: user?.apiUsage,
-    //           },
-    //         },
-    //       },
-    //       { new: true }
-    //     );
-    //   }
-    // }
-
-    if (user.subscription === true) {
-      if (user.subLastDate === user.subEndDate) {
-        const updatedUser = await User.findByIdAndUpdate(
-          _id,
+          { new: true }
+        );
+      } else {
+        await User.updateOne(
+          { _id },
           {
-            subscription: false,
-            credit: 0,
-            subLastDate: "",
-            subEndDate: "",
-            subPerDayCredit: 0,
+            $push: {
+              apiUsageHistory: {
+                Date: currentDate,
+                deliverable: user?.deliverable || 0,
+                invalid: user?.invalid || 0,
+                apiUsage: user?.apiUsage || 0,
+              },
+            },
           },
           { new: true }
         );
-        return resReturn(res, 200, {
-          msg: "subscription ended",
-          user: updatedUser,
-        });
-      } else if (currentDate !== user.subLastDate) {
-        const updatedUser = await User.findByIdAndUpdate(
-          _id,
-          {
-            subLastDate: currentDate,
-            credit: user.subPerDayCredit,
-          },
-          { new: true }
-        );
-
-        return resReturn(res, 200, {
-          msg: "credit and date updated",
-          user: updatedUser,
-        });
       }
-    }
 
-    return resReturn(res, 200, { msg: "default user", user });
+      if (user.subscription === true) {
+        if (user.subLastDate === user.subEndDate) {
+          const updatedUser = await User.findByIdAndUpdate(
+            _id,
+            {
+              subscription: false,
+              credit: 0,
+              subLastDate: "",
+              subEndDate: "",
+              subPerDayCredit: 0,
+            },
+            { new: true }
+          );
+          return resReturn(res, 200, {
+            msg: "subscription ended",
+            user: updatedUser,
+          });
+        } else if (currentDate !== user.subLastDate) {
+          if (user.subTotalCredit < user.subPerDayCredit) {
+            const updatedUser = await User.findByIdAndUpdate(
+              _id,
+              {
+                subLastDate: currentDate,
+                credit: user.credit + user.subTotalCredit,
+                subTotalCredit: 0,
+              },
+              { new: true }
+            );
+
+            return resReturn(res, 200, {
+              msg: "credit and date ended.",
+              user: updatedUser,
+            });
+          } else {
+            const updatedUser = await User.findByIdAndUpdate(
+              _id,
+              {
+                subLastDate: currentDate,
+                credit: user.credit + user.subPerDayCredit,
+                subTotalCredit: user.subTotalCredit - user.subPerDayCredit,
+              },
+              { new: true }
+            );
+
+            return resReturn(res, 200, {
+              msg: "credit and date updated",
+              user: updatedUser,
+            });
+          }
+        }
+      }
+      return resReturn(res, 200, { msg: "default user", user });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   register = async (req, res) => {
-    const { name, email, password } = req.body;
     try {
+      const { name, email, password } = req.body;
       const { data } = await axios.get("https://jsonip.com");
       const ip = data.ip;
       if (!ip) return resReturn(res, 222, { err: "ip not found" });
 
-      // const ipFind = await User.findOne({ ip });
+      const ipFind = await User.findOne({ ip });
       // if (ipFind)
       //   return resReturn(res, 222, { err: "this ip already registered" });
 
       const find = await User.findOne({ email });
       if (find) return resReturn(res, 222, { err: "user already registered" });
 
-      const userIp = await UserIp.findOne({ ip });
-      if (!userIp)
-        return resReturn(res, 222, { err: "user ip not registered" });
+      // const userIp = await UserIp.findOne({ ip });
+      // if (!userIp)
+      //   return resReturn(res, 222, { err: "user ip not registered" });
 
       const bcryptPass = bcrypt.hashSync(password, 10);
-
       const gmailAuthToken = await jwt.sign({ email }, process.env.jwt_secret, {
-        expiresIn: "2m",
+        expiresIn: "15m",
       });
 
       const link = `${clientUrl}/email-validation/${gmailAuthToken}`;
@@ -523,209 +599,239 @@ class user {
 
         return res.status(201).send(mailData);
       }
-      // const user = await User.create({
-      //   name,
-      //   email,
-      //   password: bcrypt.hashSync(password, 10),
-      //   ip,
-      // });
-
-      // const token = await tokenCreate({
-      //   _id: user._id,
-      //   role: user.role,
-      //   email: user.email,
-      //   subscription: user.subscription,
-      //   credit: user.credit,
-      //   payAsGo: user.payAsGo,
-      // });
-
-      // resReturn(res, 201, { msg: "user created", user, token });
     } catch (error) {
       console.log(error.message);
     }
   };
 
   emailAuthCheck = async (req, res) => {
-    const { token } = req.params;
-    if (!token || token === "null")
-      return resReturn(res, 222, { err: "token not provided." });
+    try {
+      const { token } = req.params;
+      if (!token || token === "null")
+        return resReturn(res, 222, { err: "token not provided." });
 
-    await jwt.verify(
-      token,
-      process.env.jwt_secret,
-      async (err, verifiedJwt) => {
-        if (err) return resReturn(res, 223, { err: err.message });
-        const { data } = await axios.get("https://jsonip.com");
-        const ip = data.ip;
-        const { email } = verifiedJwt;
-        const find = await User.findOne({ email });
-        if (!find) return resReturn(res, 222, { err: "user not found." });
-        const findVerify = await User.findOne({ email, isVerify: true });
-        if (findVerify)
-          return resReturn(res, 222, {
-            err: "you already veirfy this user.",
+      await jwt.verify(
+        token,
+        process.env.jwt_secret,
+        async (err, verifiedJwt) => {
+          if (err) return resReturn(res, 223, { err: err.message });
+          const { data } = await axios.get("https://jsonip.com");
+          const ip = data.ip;
+          const { email } = verifiedJwt;
+          const find = await User.findOne({ email });
+          if (!find) return resReturn(res, 222, { err: "user not found." });
+          const findVerify = await User.findOne({ email, isVerify: true });
+          if (findVerify)
+            return resReturn(res, 222, {
+              err: "you already veirfy this user.",
+            });
+
+          const user = await User.findOneAndUpdate(
+            { email },
+            { isVerify: true },
+            { new: true }
+          );
+
+          const token = await tokenCreate({
+            _id: user._id,
+            role: user.role,
+            email: user.email,
           });
 
-        const user = await User.findOneAndUpdate(
-          { email },
-          { isVerify: true },
-          { new: true }
-        );
-
-        const token = await tokenCreate({
-          _id: user._id,
-          role: user.role,
-          email: user.email,
-        });
-
-        resReturn(res, 200, {
-          msg: "user verified successfully",
-          token,
-          user,
-        });
-      }
-    );
+          resReturn(res, 200, {
+            msg: "user verified successfully",
+            token,
+            user,
+          });
+        }
+      );
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   login = async (req, res) => {
-    const { email, password } = req.body;
-    const find = await User.findOne({ email });
-    if (!find)
-      return resReturn(res, 222, {
-        err: "user not found",
-      });
+    try {
+      const { email, password } = req.body;
+      const find = await User.findOne({ email });
+      if (!find)
+        return resReturn(res, 222, {
+          err: "user not found",
+        });
 
-    const userVerify = await User.findOne({ email, isVerify: false });
-    if (userVerify)
-      return resReturn(res, 204, {
-        err: "user not verified ....",
-      });
+      if (!bcrypt.compareSync(password, find.password))
+        return resReturn(res, 222, { err: "password not match" });
 
-    if (!bcrypt.compareSync(password, find.password))
-      return resReturn(res, 222, { err: "password not match" });
-    const token = await tokenCreate({
-      _id: find._id,
-      role: find.role,
-      email: find.email,
-    });
-    resReturn(res, 201, { msg: "login success", user: find, token });
+      if (find.isVerify === false)
+        return resReturn(res, 204, {
+          err: "user not verified ....",
+        });
+
+      if (find.twoFectorAuthSave === false) {
+        return resReturn(res, 224, { err: "need Two Fector Authentication!" });
+      }
+
+      const token = await tokenCreate({
+        _id: find._id,
+        role: find.role,
+        email: find.email,
+      });
+      resReturn(res, 201, { msg: "login success", user: find, token });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   googleLogin = async (req, res) => {
-    const { name, email } = req.body;
-    const find = await User.findOne({
-      email,
-      password: { $ne: "googleHasNoPassword" },
-    });
-
-    if (find)
-      return resReturn(res, 223, { err: "this email already logined." });
-
-    const googleFind = await User.findOne({
-      email,
-      password: "googleHasNoPassword",
-    });
-
-    if (!googleFind) {
-      const newUser = await User.create({
+    try {
+      const { name, email } = req.body;
+      const find = await User.findOne({
         email,
-        name,
+        password: { $ne: "googleHasNoPassword" },
       });
+
+      if (find)
+        return resReturn(res, 223, { err: "this email already logined." });
+
+      const googleFind = await User.findOne({
+        email,
+        password: "googleHasNoPassword",
+      });
+      if (!googleFind) {
+        const newUser = await User.create({
+          email,
+          name,
+        });
+        const token = await tokenCreate({
+          _id: newUser._id,
+          role: newUser.role,
+          email: newUser.email,
+        });
+        return resReturn(res, 201, {
+          msg: "register success",
+          user: newUser,
+          token,
+        });
+      }
+
       const token = await tokenCreate({
-        _id: newUser._id,
-        role: newUser.role,
-        email: newUser.email,
+        _id: googleFind._id,
+        role: googleFind.role,
+        email: googleFind.email,
       });
-      return resReturn(res, 201, {
-        msg: "register success",
-        user: newUser,
-        token,
-      });
+      resReturn(res, 201, { msg: "login success", user: googleFind, token });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
     }
-
-    const token = await tokenCreate({
-      _id: googleFind._id,
-      role: googleFind.role,
-      email: googleFind.email,
-    });
-
-    resReturn(res, 201, { msg: "login success", user: googleFind, token });
   };
 
   updatePass = async (req, res) => {
-    const { password } = req.body;
-    const { _id } = req.user;
-    await User.findByIdAndUpdate(
-      _id,
-      {
-        password: bcrypt.hashSync(password, 10),
-      },
-      { new: true }
-    );
+    try {
+      const { password } = req.body;
+      const { _id } = req.user;
+      await User.findByIdAndUpdate(
+        _id,
+        {
+          password: bcrypt.hashSync(password, 10),
+        },
+        { new: true }
+      );
 
-    resReturn(res, 202, { msg: "update password successfully." });
+      resReturn(res, 202, { msg: "update password successfully." });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   updateProfile = async (req, res) => {
-    const { name, email, country, address, zipCode, mobileNumber, city } =
-      req.body;
-    const { _id } = req.user;
+    try {
+      const { name, email, country, address, zipCode, mobileNumber, city } =
+        req.body;
+      const { _id } = req.user;
 
-    const user = await User.findByIdAndUpdate(
-      _id,
-      {
-        name,
-        email,
-        country,
-        address,
-        zipCode,
-        mobileNumber,
-        city,
-      },
-      { new: true }
-    );
+      const user = await User.findByIdAndUpdate(
+        _id,
+        {
+          name,
+          email,
+          country,
+          address,
+          zipCode,
+          mobileNumber,
+          city,
+        },
+        { new: true }
+      );
 
-    resReturn(res, 202, { msg: "user profile updated", user });
+      resReturn(res, 202, { msg: "user profile updated", user });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   getMany = async (req, res) => {
-    const { role, _id } = req.user;
-    if (role === "admin")
-      return resReturn(res, 222, { err: "only admin can block user." });
-    const g = await User.find({ _id: { $ne: _id } }).select("-password");
-    // const users = g.filter((user) => String(user._id) !== String(_id));
-    resReturn(res, 200, { users: g });
+    try {
+      const { search, page, limit } = req.query;
+      const { role, _id } = req.user;
+      if (role === "user")
+        return resReturn(res, 222, { err: "only admin allowed." });
+
+      const pageNumber = parseInt(page) || 10;
+      const limitNumber = parseInt(limit) || 10;
+      const skip = (pageNumber - 1) * limitNumber;
+
+      // Create a filter for the search query
+      const filter = search
+        ? {
+            _id: { $ne: _id },
+            name: { $regex: search, $options: "i" },
+          }
+        : { _id: { $ne: _id } };
+
+      const count = await User.countDocuments(filter);
+      // Fetch the users from the database
+      const users = await User.find(filter).skip(skip).limit(limitNumber);
+      resReturn(res, 200, { users, count });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   deleteMany = async (req, res) => {
-    const users = await User.deleteMany();
-    resReturn(res, 200, { users });
+    try {
+      const users = await User.deleteMany();
+      resReturn(res, 200, { users });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
 
   adjustUser = async (req, res) => {
-    const { _id } = req.params;
-    const { limit } = req.body;
-    if (!_id) return resReturn(res, 222, { err: "id not found" });
+    try {
+      const { _id } = req.params;
+      const { limit } = req.body;
+      if (!_id) return resReturn(res, 222, { err: "id not found" });
 
-    const find = await User.findById(_id);
-    if (!find) return resReturn(res, 222, { err: "user not found" });
+      const find = await User.findById(_id);
+      if (!find) return resReturn(res, 222, { err: "user not found" });
 
-    const updatedUser = await User.findByIdAndUpdate(
-      _id,
-      {
-        subscription: false,
-        credit: limit,
-        subPerDayCredit: 0,
-        subLastDate: "",
-        subEndDate: "",
-      },
-      { new: true }
-    );
+      const updatedUser = await User.findByIdAndUpdate(
+        _id,
+        {
+          subscription: false,
+          credit: limit,
+          subPerDayCredit: 0,
+          subLastDate: "",
+          subEndDate: "",
+        },
+        { new: true }
+      );
 
-    resReturn(res, 201, { msg: "Success", user: updatedUser });
+      resReturn(res, 201, { msg: "Success", user: updatedUser });
+    } catch (error) {
+      resReturn(res, 222, { err: error.message });
+    }
   };
-
-  // end
 }
 
 module.exports = new user();
