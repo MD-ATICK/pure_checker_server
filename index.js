@@ -13,8 +13,13 @@ const { resReturn } = require("./utils/utils");
 const { upload } = require("./utils/Multer");
 const { checkEmail } = require("./utils/emailValidator");
 
+// const options = {
+//   origin: ["https://pure-checker-client.vercel.app", "http://localhost:5173"],
+//   credentials: true,
+// };
+
 const options = {
-  origin: ["https://pure-checker-client.vercel.app", "http://localhost:5173"],
+  origin: ["https://purechecker.com", "http://localhost:5173"],
   credentials: true,
 };
 
