@@ -20,11 +20,13 @@ const { checkEmail } = require("./utils/emailValidator");
 
 const web = "local";
 const clientUrl =
-  web === "prod" ? "https://purechecker.com" : "http://localhost:5173";
+  web === "prod"
+    ? "https://spiffy-salamander-bf0160.netlify.app"
+    : "http://localhost:5173";
 module.exports = clientUrl;
 
 const options = {
-  origin: [clientUrl, "https://spiffy-salamander-bf0160.netlify.app"],
+  origin: [clientUrl],
   credentials: true,
 };
 
