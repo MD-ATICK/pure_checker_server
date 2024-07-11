@@ -14,12 +14,17 @@ const { upload } = require("./utils/Multer");
 const { checkEmail } = require("./utils/emailValidator");
 
 // const options = {
-//   origin: ["https://pure-checker-client.vercel.app", "http://localhost:5173"],
+//   origin: ["https://pure-checker-client.vercel.app", "https://purechecker.com"],
 //   credentials: true,
 // };
 
+const web = "local";
+const clientUrl =
+  web === "prod" ? "https://purechecker.com" : "http://localhost:5173";
+module.exports = clientUrl;
+
 const options = {
-  origin: ["https://purechecker.com", "http://localhost:5173"],
+  origin: [clientUrl, "https://spiffy-salamander-bf0160.netlify.app"],
   credentials: true,
 };
 

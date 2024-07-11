@@ -1,12 +1,7 @@
 require("dotenv").config();
 const { default: axios } = require("axios");
 const User = require("../models/userModel");
-const {
-  resReturn,
-  tokenCreate,
-  sendMail,
-  clientUrl,
-} = require("../utils/utils");
+const { resReturn, tokenCreate, sendMail } = require("../utils/utils");
 const bcrypt = require("bcrypt");
 const moment = require("moment");
 const UserIp = require("../models/IpModel");
@@ -17,6 +12,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
 const Binance = require("node-binance-api");
+const clientUrl = require("..");
 
 const binance = new Binance().options({
   APIKEY: "zsjdb33y8rd5rvcrniyxa5d7kem6wbjp8snkzxkoud3umkgfmoaiuuqxafn4ybdu",
@@ -571,8 +567,8 @@ class user {
       if (!ip) return resReturn(res, 222, { err: "ip not found" });
 
       const ipFind = await User.findOne({ ip });
-      // if (ipFind)
-      //   return resReturn(res, 222, { err: "this ip already registered" });
+      if (ipFind)
+        return resReturn(res, 222, { err: "this ip user already registered" });
 
       const find = await User.findOne({ email });
       if (find) return resReturn(res, 222, { err: "user already registered" });

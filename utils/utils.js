@@ -3,9 +3,6 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const User = require("../models/userModel");
 
-exports.clientUrl = "https://purechecker.com";
-// exports.clientUrl = "https://pure-checker-client.vercel.app";
-
 exports.resReturn = async (res, status, body) => {
   return res.status(status).json(body);
 };

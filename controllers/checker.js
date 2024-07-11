@@ -40,13 +40,15 @@ class checker {
             if (token === "null" || !token) {
               const x = await axios.get("https://jsonip.com");
               const ip = x.data.ip;
-              const userIp = await UserIp.findOneAndUpdate(
+              let userIp = await UserIp.findOne({ip})
+              if (!userIp)
+                return resReturn(res, 222, { err: "ip not a found." });
+
+              userIp = await UserIp.findOneAndUpdate(
                 { ip },
                 { $inc: { freeCredit: -1 } },
                 { new: true }
               );
-              if (!userIp)
-                return resReturn(res, 222, { err: "ip not a found." });
               resReturn(res, 200, {
                 data: { ...data, email },
                 userIp,

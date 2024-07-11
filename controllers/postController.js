@@ -104,7 +104,7 @@ class PostController {
         order_id: "1234",
         currency: "USD",
         amount: 999,
-        url_callback: "http://localhost:5173",
+        url_callback: "https://purechecker.com",
       };
       const merchant = "9e7f1691-ee72-4447-8c3a-9afeb2074de9";
       const bufferData = Buffer.from(JSON.stringify(payload))
