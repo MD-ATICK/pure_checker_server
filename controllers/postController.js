@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { default: axios } = require("axios");
 const Post = require("../models/postModel");
 const { resReturn } = require("../utils/utils");
@@ -97,6 +98,9 @@ class PostController {
   };
 
   order = async (req, res) => {
+    if (!process.env.clientWebUrl)
+      return resReturn(res, 222, { err: "env not found." });
+
     try {
       const apiKey =
         "nmSI06rxR03Yzdvl6a0aUvJxlfeNMQrjegAWOIrgayqnR2y4sCD5wz29LLkY77FXplOT6aK1c5CjOlQkqWUQwLTIyVDXymdPTCm6qMDYsdV75NkK51bn1foaqgA0yVKB";
@@ -104,7 +108,7 @@ class PostController {
         order_id: "1234",
         currency: "USD",
         amount: 999,
-        url_callback: "https://purechecker.com",
+        url_callback: process.env?.clientWebUrl,
       };
       const merchant = "9e7f1691-ee72-4447-8c3a-9afeb2074de9";
       const bufferData = Buffer.from(JSON.stringify(payload))

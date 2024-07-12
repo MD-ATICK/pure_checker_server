@@ -12,7 +12,11 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
 const Binance = require("node-binance-api");
-const clientUrl = require("..");
+
+const clientUrl =
+  process.env.server === "prod"
+    ? process.env.clientWebUrl
+    : "http://localhost:5173";
 
 const binance = new Binance().options({
   APIKEY: "zsjdb33y8rd5rvcrniyxa5d7kem6wbjp8snkzxkoud3umkgfmoaiuuqxafn4ybdu",
@@ -563,7 +567,7 @@ class user {
     try {
       const { name, email, password } = req.body;
       const { data } = await axios.get("https://jsonip.com");
-      const ip = data.ip;
+      const ip = data?.ip;
       if (!ip) return resReturn(res, 222, { err: "ip not found" });
 
       const ipFind = await User.findOne({ ip });

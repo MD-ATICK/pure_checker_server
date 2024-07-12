@@ -18,12 +18,16 @@ const { checkEmail } = require("./utils/emailValidator");
 //   credentials: true,
 // };
 
-const web = "local";
+if (!process.env.server || !process.env.clientWebUrl) {
+  return console.log("env file not found.");
+}
+
 const clientUrl =
-  web === "prod"
-    ? "https://spiffy-salamander-bf0160.netlify.app"
+  process.env.server === "prod"
+    ? process.env.clientWebUrl
     : "http://localhost:5173";
-module.exports = clientUrl;
+
+console.log({ server: process.env.server, url: process.env.clientWebUrl });
 
 const options = {
   origin: [clientUrl],
