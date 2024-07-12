@@ -18,9 +18,9 @@ const { checkEmail } = require("./utils/emailValidator");
 //   credentials: true,
 // };
 
-// if (!process.env.server || !process.env.clientWebUrl) {
-//   return console.log("env file not found.");
-// }
+if (!process.env.server || !process.env.clientWebUrl) {
+  return console.log("env file not found.");
+}
 
 const clientUrl =
   process.env.server === "prod"
@@ -35,11 +35,11 @@ const options = {
 };
 
 databaseConnect();
+app.use(cors(options));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use(cors());
 
 app.get("/hi", (req, res) =>
   resReturn(res, 200, { msg: path.join(__dirname) })
