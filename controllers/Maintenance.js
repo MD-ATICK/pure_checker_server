@@ -10,9 +10,9 @@ class MaintenanceController {
         return resReturn(res, 222, { err: "already running a maintenance" });
 
       const maintenance = await Maintenance.create({
-        status: "open",
+        status : "open"
       });
-      res.status(201).json({ msg: "created sucess", maintenance });
+      res.status(201).json({ msg: "created success", maintenance });
     } catch (error) {
       res.status(222).json({ message: error.message });
     }
