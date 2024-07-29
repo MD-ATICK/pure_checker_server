@@ -13,7 +13,7 @@ const adminRouter = require("./router/adminRoute");
 const otpRouter = require("./router/otpRoute");
 const planRouter = require("./router/planRoute");
 const volumeRouter = require("./router/volumeRoute");
-// const maintenanceRouter = require("./router/MaintenanceRoute");
+const maintenanceRouter = require("./router/MaintenanceRoute");
 const { databaseConnect } = require("./utils/DatabaseConnect");
 const path = require("path");
 const { resReturn } = require("./utils/utils");
@@ -61,7 +61,7 @@ app.get("/test/:email", (req, res) => {
 app.use("/api/v1/gmail", checkerRouter);
 app.use("/api/v2/user", userRouter);
 app.use("/api/v3/post", postRouter);
-// app.use("/api/v4/maintenance", maintenanceRouter);
+app.use("/api/v4/maintenance", maintenanceRouter);
 app.use("/api/v5/apis", apisRouter);
 app.use("/api/v6/payment", paymentRouter);
 app.use("/api/v7/mailSent", mailRouter);
