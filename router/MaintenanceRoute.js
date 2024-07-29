@@ -1,6 +1,8 @@
 const express = require("express");
-const maintenance = require("../controllers/maintenance");
+import { dirname } from "path";
+import maintenance from "../controllers/maintenance";
 const router = express.Router();
+console.log({ dirname });
 
 router.get("/create", maintenance.create);
 router.get("/remove", maintenance.remove);
