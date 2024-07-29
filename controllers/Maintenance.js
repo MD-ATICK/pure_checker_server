@@ -1,8 +1,8 @@
+require("dotenv").config();
 const Maintenance = require("../models/MaintananceModel");
 const { resReturn } = require("../utils/utils");
 
 class MaintenanceController {
-
   create = async (req, res) => {
     try {
       const find = await Maintenance.findOne({ status: "open" });
@@ -10,7 +10,7 @@ class MaintenanceController {
         return resReturn(res, 222, { err: "already running a maintenance" });
 
       const maintenance = await Maintenance.create({
-        status : "open"
+        status: "open",
       });
       res.status(201).json({ msg: "created success", maintenance });
     } catch (error) {
@@ -20,17 +20,15 @@ class MaintenanceController {
 
   remove = async (req, res) => {
     try {
-      
       const find = await Maintenance.findOne({ status: "open" });
       if (!find) return resReturn(res, 222, { err: "maintenance not found" });
-  
+
       const update = await Maintenance.findByIdAndUpdate(
         find?._id,
         { status: "closed" },
         { new: true }
       );
       return resReturn(res, 200, { msg: " updated successfully", update });
-      
     } catch (error) {
       resReturn(res, 222, { err: error.message });
     }
@@ -38,7 +36,6 @@ class MaintenanceController {
 
   checking = async (req, res) => {
     try {
-      
       const find = await Maintenance.findOne({ status: "open" });
       if (find) {
         return resReturn(res, 200, {
@@ -47,7 +44,6 @@ class MaintenanceController {
         });
       }
       resReturn(res, 222, { msg: "not have maintenance" });
-      
     } catch (error) {
       resReturn(res, 222, { err: error.message });
     }
@@ -55,10 +51,8 @@ class MaintenanceController {
 
   getAll = async (req, res) => {
     try {
-      
       const maintenances = await Maintenance.find({});
       resReturn(res, 200, { msg: "all maintenance", maintenances });
-      
     } catch (error) {
       resReturn(res, 222, { err: error.message });
     }
