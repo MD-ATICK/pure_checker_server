@@ -6,28 +6,29 @@ const cors = require("cors");
 const userRouter = require("./router/userRoute");
 const checkerRouter = require("./router/CheckerRoute");
 const postRouter = require("./router/postRoute");
-const maintenanceRouter = require("./router/MaintananceRoute");
+const apisRouter = require("./router/ApisRoute");
+const paymentRouter = require("./router/paymentRoute");
+const mailRouter = require("./router/mailRoute");
+const adminRouter = require("./router/adminRoute");
+const otpRouter = require("./router/otpRoute");
+const planRouter = require("./router/planRoute");
+const volumeRouter = require("./router/volumeRoute");
+const maintenanceRouter = require("./router/MaintenanceRoute");
 const { databaseConnect } = require("./utils/DatabaseConnect");
 const path = require("path");
 const { resReturn } = require("./utils/utils");
 const { upload } = require("./utils/Multer");
 const { checkEmail } = require("./utils/emailValidator");
 
-// const options = {
-//   origin: ["https://pure-checker-client.vercel.app", "https://purechecker.com"],
-//   credentials: true,
-// };
-
 if (!process.env.server || !process.env.clientWebUrl) {
   return console.log("env file not found.");
 }
+console.log({ server: process.env.server, url: process.env.clientWebUrl });
 
 const clientUrl =
   process.env.server === "prod"
     ? process.env.clientWebUrl
     : "http://localhost:5173";
-
-console.log({ server: process.env.server, url: process.env.clientWebUrl });
 
 const options = {
   origin: [clientUrl],
@@ -61,6 +62,13 @@ app.use("/api/v1/gmail", checkerRouter);
 app.use("/api/v2/user", userRouter);
 app.use("/api/v3/post", postRouter);
 app.use("/api/v4/maintenance", maintenanceRouter);
+app.use("/api/v5/apis", apisRouter);
+app.use("/api/v6/payment", paymentRouter);
+app.use("/api/v7/mailSent", mailRouter);
+app.use("/api/v8/volume", volumeRouter);
+app.use("/api/v9/admin", adminRouter);
+app.use("/api/v10/plan", planRouter);
+app.use("/api/v11/otp", otpRouter);
 
 app.listen(port, () => {
   console.log("▶️  app listening on port" + " " + port + "!");
