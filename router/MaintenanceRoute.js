@@ -1,15 +1,11 @@
-// const express = require("express");
-// const {
-//   checking,
-//   create,
-//   remove,
-//   getAll,
-// } = require("../controllers/maintenance.js");
-// const router = express.Router();
+const express = require("express");
+const maintenance = require('../controllers/maintenance')
 
-// router.get("/create", create);
-// router.get("/remove", remove);
-// router.get("/checking", checking);
-// router.get("/all-maintenance", getAll);
+const router = express.Router();
 
-// module.exports = router;
+router.get("/create", maintenance.create);
+router.get("/remove", maintenance.remove);
+router.get("/checking", maintenance.checking);
+router.get("/all-maintenance", maintenance.getAll);
+
+module.exports = router;

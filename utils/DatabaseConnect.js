@@ -8,6 +8,6 @@ exports.databaseConnect = async () => {
     );
     console.log(`✅ connected to ${connection.host}`);
   } catch (error) {
-    console.log(error.message);
+    console.log(error.message); 
   }
 };
