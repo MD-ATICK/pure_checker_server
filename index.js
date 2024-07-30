@@ -13,29 +13,23 @@ const adminRouter = require("./router/adminRoute");
 const otpRouter = require("./router/otpRoute");
 const planRouter = require("./router/planRoute");
 const volumeRouter = require("./router/volumeRoute");
-const maintenanceRouter = require("./router/MaintenanceRoute");
+// const maintenanceRouter = require("./router/MaintenanceRoute");
 const { databaseConnect } = require("./utils/DatabaseConnect");
 const path = require("path");
 const { resReturn } = require("./utils/utils");
 const { upload } = require("./utils/Multer");
 const { checkEmail } = require("./utils/emailValidator");
 
-if (!process.env.server || !process.env.clientWebUrl) {
-  return console.log("env file not found.");
-}
+
 console.log({ server: process.env.server, url: process.env.clientWebUrl });
 
-export const clientUrl =
+const clientUrl =
   process.env.server === "prod"
     ? process.env.clientWebUrl
     : "http://localhost:5173";
 
 const options = {
-  origin: [
-    "https://purechecker.com",
-    "https://spiffy-salamander-bf0160.netlify.app",
-    "http://localhost:5173",
-  ],
+  origin: ["https://purechecker.com" , "http://localhost:5173" , "https://spiffy-salamander-bf0160.netlify.app"],
   credentials: true,
 };
 
