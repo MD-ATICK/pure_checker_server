@@ -25,10 +25,10 @@ if (!process.env.server || !process.env.clientWebUrl) {
 }
 console.log({ server: process.env.server, url: process.env.clientWebUrl });
 
-// const clientUrl =
-//   process.env.server === "prod"
-//     ? process.env.clientWebUrl
-//     : "http://localhost:5173";
+export const clientUrl =
+  process.env.server === "prod"
+    ? process.env.clientWebUrl
+    : "http://localhost:5173";
 
 const options = {
   origin: [
@@ -65,7 +65,7 @@ app.get("/test/:email", (req, res) => {
 app.use("/api/v1/gmail", checkerRouter);
 app.use("/api/v2/user", userRouter);
 app.use("/api/v3/post", postRouter);
-app.use("/api/v4/maintenance", maintenanceRouter);
+// app.use("/api/v4/maintenance", maintenanceRouter);
 app.use("/api/v5/apis", apisRouter);
 app.use("/api/v6/payment", paymentRouter);
 app.use("/api/v7/mailSent", mailRouter);

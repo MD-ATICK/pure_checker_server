@@ -3,15 +3,17 @@ const User = require("../models/userModel");
 const { resReturn, sendMail, tokenCreate } = require("../utils/utils");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const axios = require('axios')
+const axios = require("axios");
+const { clientUrl } = require("..");
 
-const clientUrl =
-  process.env.server === "prod"
-    ? process.env.clientWebUrl
-    : "http://localhost:5173";
+// const clientUrl =
+//   process.env.server === "prod"
+//     ? process.env.clientWebUrl
+//     : "http://localhost:5173";
+
+console.log({ clientUrl });
 
 class mailController {
-
   emailAuthCheck = async (req, res) => {
     try {
       const { token } = req.params;
@@ -57,8 +59,6 @@ class mailController {
       resReturn(res, 222, { err: error.message });
     }
   };
-
-  
 
   verifyMailSent = async (req, res) => {
     try {
