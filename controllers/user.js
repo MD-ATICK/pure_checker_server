@@ -18,10 +18,8 @@ const clientUrl =
   process.env.server === "prod"
     ? process.env.clientWebUrl
     : "http://localhost:5173";
-    
 
 class user {
-
   create = async (req, res) => {
     try {
       const find = await Maintenance.findOne({ status: "open" });
@@ -101,7 +99,8 @@ class user {
       const { _id } = req.user;
       const user = await User.findById(_id).select("-password");
       if (!user) return resReturn(res, 222, { err: "user not found" });
-      const currentDate = moment().format("YYYY-MM-DD");
+      const currentDate = moment();
+      // const currentDate = moment().format("YYYY-MM-DD");
 
       const findH = await User.findOne({
         _id,
@@ -138,7 +137,7 @@ class user {
       }
 
       if (user.subscription === true) {
-        if (user.subLastDate === user.subEndDate) {
+        if (moment(user.subLastDate).isAfter(moment(user.subEndDate))) {
           const updatedUser = await User.findByIdAndUpdate(
             _id,
             {
@@ -234,7 +233,6 @@ class user {
       console.log(error.message);
     }
   };
-
 
   login = async (req, res) => {
     try {
@@ -354,8 +352,6 @@ class user {
       resReturn(res, 222, { err: error.message });
     }
   };
-
-
 }
 
 module.exports = new user();

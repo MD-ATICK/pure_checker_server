@@ -23,10 +23,10 @@ const { checkEmail } = require("./utils/emailValidator");
 
 console.log({ server: process.env.server, url: process.env.clientWebUrl });
 
-const clientUrl =
-  process.env.server === "prod"
-    ? process.env.clientWebUrl
-    : "http://localhost:5173";
+// const clientUrl =
+//   process.env.server === "prod"
+//     ? process.env.clientWebUrl
+//     : "http://localhost:5173";
 
 const options = {
   origin: ["https://purechecker.com" , "http://localhost:5173" , "https://spiffy-salamander-bf0160.netlify.app"],
