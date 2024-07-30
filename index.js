@@ -25,13 +25,17 @@ if (!process.env.server || !process.env.clientWebUrl) {
 }
 console.log({ server: process.env.server, url: process.env.clientWebUrl });
 
-const clientUrl =
-  process.env.server === "prod"
-    ? process.env.clientWebUrl
-    : "http://localhost:5173";
+// const clientUrl =
+//   process.env.server === "prod"
+//     ? process.env.clientWebUrl
+//     : "http://localhost:5173";
 
 const options = {
-  origin: [clientUrl],
+  origin: [
+    "https://purechecker.com",
+    "https://spiffy-salamander-bf0160.netlify.app",
+    "http://localhost:5173",
+  ],
   credentials: true,
 };
 
